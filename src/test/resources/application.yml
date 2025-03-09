@@ -1,0 +1,5 @@
+application:
+  name: yawl-test
+  web-config:
+    port: 8080
+    context-path: /
