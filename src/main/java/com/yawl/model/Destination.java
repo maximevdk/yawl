@@ -1,4 +1,4 @@
 package com.yawl.model;
 
-public record Destination(String controllerBeanName, String methodName) {
+public record Destination(Class<?> controller, String methodName, String mediaType) {
 }

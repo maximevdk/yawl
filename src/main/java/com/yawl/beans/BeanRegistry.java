@@ -1,14 +1,15 @@
 package com.yawl.beans;
 
 import com.yawl.exception.DuplicateBeanException;
+import com.yawl.exception.NoSuchBeanException;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class BeanLoader {
+public class BeanRegistry {
     private static final Map<String, Object> BEANS = new HashMap<>();
 
-    public static <T> void createBean(String name, T object) {
+    public static <T> void registerBean(String name, T object) {
         if (BEANS.containsKey(name)) {
             throw DuplicateBeanException.forBeanName(name);
         }
@@ -35,6 +36,8 @@ public class BeanLoader {
     }
 
     public static <T> T findBeanByType(Class<T> clazz) {
-        return (T) BEANS.values().stream().filter(obj -> obj.getClass() == clazz).findFirst().orElse(null);
+        return (T) BEANS.values().stream()
+                .filter(obj -> obj.getClass() == clazz)
+                .findFirst().orElseThrow(() -> NoSuchBeanException.forClass(clazz));
     }
 }

@@ -19,6 +19,7 @@
         <reflections.version>0.10.2</reflections.version>
 
         <junit.version>5.12.0</junit.version>
+        <assertj.version>3.27.2</assertj.version>
     </properties>
 
 
@@ -79,6 +80,13 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
 

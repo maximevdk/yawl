@@ -6,8 +6,14 @@ import com.yawl.annotations.WebController;
 @WebController(path = "ping")
 public class PingController {
 
+    private final PingService pingService;
+
+    public PingController(PingService pingService) {
+        this.pingService = pingService;
+    }
+
     @GetMapping
-    public String ping() {
-        return "pong";
+    public Pong ping() {
+        return pingService.ping();
     }
 }

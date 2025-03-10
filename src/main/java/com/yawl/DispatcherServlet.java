@@ -3,12 +3,13 @@ package com.yawl;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.WebController;
-import com.yawl.beans.BeanLoader;
+import com.yawl.beans.BeanRegistry;
 import com.yawl.exception.DuplicateRouteException;
-import com.yawl.exception.NoAccessibleConstructorFoundException;
 import com.yawl.model.Destination;
+import com.yawl.model.Header;
 import com.yawl.model.HttpMethod;
 import com.yawl.model.Route;
+import com.yawl.util.ConstructorUtil;
 import com.yawl.util.ReflectionUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -18,21 +19,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.yawl.util.StringUtil.decapitalize;
 
 public class DispatcherServlet extends HttpServlet {
     private static Logger log = LoggerFactory.getLogger(DispatcherServlet.class);
 
     private final JsonMapper mapper;
+    private final ReflectionUtil reflectionUtil;
     private Map<Route, Destination> routes;
 
-    public DispatcherServlet() {
-        this.mapper = BeanLoader.getBeanByName("jsonMapper", JsonMapper.class);
+    public DispatcherServlet(JsonMapper mapper, ReflectionUtil reflectionUtil) {
+        this.mapper = mapper;
+        this.reflectionUtil = reflectionUtil;
     }
 
     @Override
@@ -49,6 +52,7 @@ public class DispatcherServlet extends HttpServlet {
         var result = invokeMethod(destination);
 
         if (result.isPresent()) {
+            resp.addHeader(Header.CONTENT_TYPE, destination.mediaType());
             mapper.writeValue(resp.getOutputStream(), result.get());
         } else {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Route %s not found".formatted(req.getRequestURI()));
@@ -57,11 +61,11 @@ public class DispatcherServlet extends HttpServlet {
 
     private Optional<Object> invokeMethod(Destination destination) {
         try {
-            var controller = BeanLoader.getBeanByName(destination.controllerBeanName());
-            var result = controller.getClass().getMethod(destination.methodName()).invoke(controller);
+            var controller = BeanRegistry.findBeanByType(destination.controller());
+            var result = reflectionUtil.invokeMethodOnInstance(controller, destination.methodName());
             return Optional.of(result);
         } catch (Exception ex) {
-            log.error("Unable to invoke method {} on {}.", destination.methodName(), destination.controllerBeanName(), ex);
+            log.error("Unable to invoke method {} on {}.", destination.methodName(), destination, ex);
             return Optional.empty();
         }
     }
@@ -75,7 +79,6 @@ public class DispatcherServlet extends HttpServlet {
         // jit route building
         routes = new HashMap<>();
 
-        var reflectionUtil = ReflectionUtil.instance(BeanLoader.getBeanByName("basePackageName", String.class));
         var controllers = reflectionUtil.getClassesAnnotatedWith(WebController.class);
         log.info("Found controllers to analyze for paths {}", controllers);
 
@@ -83,7 +86,12 @@ public class DispatcherServlet extends HttpServlet {
             log.info("Scanning controller {} for mapping annotations", controller.getName());
 
             //if we were unable to create a bean of the controller, we can skip looking for the methods
-            if (!createControllerBean(controller)) {
+            var params = getConstructorParamsForController(controller);
+            var instance = ConstructorUtil.newInstance(controller, params);
+            instance.ifPresent(controllerInstance ->
+                    BeanRegistry.registerBean(decapitalize(controller.getName()), controllerInstance));
+
+            if (instance.isEmpty()) {
                 continue;
             }
 
@@ -104,25 +112,15 @@ public class DispatcherServlet extends HttpServlet {
                         throw DuplicateRouteException.forRoute(route);
                     }
 
-                    routes.put(route, new Destination(controller.getName(), method.getName()));
+                    routes.put(route, new Destination(controller, method.getName(), getMapping.produces()));
                 }
             }
         }
     }
 
-    private boolean createControllerBean(Class<?> controller) {
-        log.info("Finding suitable constructor for controller {}", controller.getDeclaredConstructors());
-        var constructor = Arrays.stream(controller.getDeclaredConstructors())
-                .filter(c -> c.canAccess(null)) // todo: find a better way to figure out if accessible
-                .findFirst().orElseThrow(() -> NoAccessibleConstructorFoundException.forClass(controller));
-
-        try {
-            Object instance = constructor.newInstance();
-            BeanLoader.createBean(controller.getName(), instance);
-            return true;
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
-            //ignore because it is our fault :grim:
-            return false;
-        }
+    private Object[] getConstructorParamsForController(Class<?> controller) {
+        return ConstructorUtil.getRequiredConstructorParameters(controller).stream()
+                .map(BeanRegistry::findBeanByType)
+                .toArray();
     }
 }
