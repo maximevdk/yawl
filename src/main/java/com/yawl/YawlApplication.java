@@ -3,6 +3,7 @@ package com.yawl;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
 import com.yawl.beans.BeanRegistry;
 import com.yawl.beans.CommonBeans;
@@ -78,12 +79,19 @@ public class YawlApplication {
     private static void generateServiceBeans() {
         var reflectionUtil = BeanRegistry.findBeanByType(ReflectionUtil.class);
 
+        //TODO: refactor that it doesn't matter in which order those are initialized
+        reflectionUtil.getClassesAnnotatedWith(Repository.class)
+                .forEach(YawlApplication::registerBean);
         reflectionUtil.getClassesAnnotatedWith(Service.class)
                 .forEach(YawlApplication::registerBean);
     }
 
     private static void registerBean(Class<?> clazz) {
         log.info("Creating bean for class {}", clazz);
-        ConstructorUtil.newInstance(clazz).ifPresent(instance -> BeanRegistry.registerBean(decapitalize(clazz.getSimpleName()), instance));
+        var dependencies = ConstructorUtil.getRequiredConstructorParameters(clazz).stream()
+                .map(BeanRegistry::findBeanByType)
+                .toArray();
+        ConstructorUtil.newInstance(clazz, dependencies)
+                .ifPresent(instance -> BeanRegistry.registerBean(decapitalize(clazz.getSimpleName()), instance));
     }
 }
