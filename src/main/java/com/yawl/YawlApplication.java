@@ -79,10 +79,11 @@ public class YawlApplication {
         var reflectionUtil = BeanRegistry.findBeanByType(ReflectionUtil.class);
 
         reflectionUtil.getClassesAnnotatedWith(Service.class)
-                .forEach(clazz -> {
-                            log.info("Creating bean for class {}", clazz);
-                            ConstructorUtil.newInstance(clazz).ifPresent(instance -> BeanRegistry.registerBean(decapitalize(clazz.getSimpleName()), instance));
-                        }
-                );
+                .forEach(YawlApplication::registerBean);
+    }
+
+    private static void registerBean(Class<?> clazz) {
+        log.info("Creating bean for class {}", clazz);
+        ConstructorUtil.newInstance(clazz).ifPresent(instance -> BeanRegistry.registerBean(decapitalize(clazz.getSimpleName()), instance));
     }
 }

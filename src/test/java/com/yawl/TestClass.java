@@ -1,4 +1,4 @@
-package com.yawl.util;
+package com.yawl;
 
 public class TestClass {
     private String var1;

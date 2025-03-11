@@ -1,5 +1,6 @@
 package com.yawl.util;
 
+import com.yawl.TestClass;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
