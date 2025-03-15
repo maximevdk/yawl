@@ -1,12 +1,12 @@
 package com.yawl;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
 import com.yawl.beans.BeanRegistry;
 import com.yawl.beans.CommonBeans;
+import com.yawl.beans.HealthRegistry;
 import com.yawl.exception.InvalidContextException;
 import com.yawl.util.ConstructorUtil;
 import com.yawl.util.ReflectionUtil;
@@ -26,6 +26,7 @@ public class YawlApplication {
         var properties = init(baseClass);
 
         log.info("Starting YAWL Application {} in {} on port {}", properties.name(), properties.basePath(), properties.webConfig().port());
+        HealthRegistry.systemStarting();
 
         var tomcat = new Tomcat();
         tomcat.setBaseDir("./target");
@@ -35,6 +36,11 @@ public class YawlApplication {
 
         tomcat.addServlet(properties.webConfig().contextPath(), "dispatcherServlet", BeanRegistry.findBeanByType(DispatcherServlet.class));
         context.addServletMappingDecoded("/*", "dispatcherServlet");
+
+        if (properties.management().managementEndpointEnabled()) {
+            tomcat.addServlet(properties.webConfig().contextPath(), "healthServlet", BeanRegistry.findBeanByType(HealthServlet.class));
+            context.addServletMappingDecoded(properties.management().endpoint().path(), "healthServlet");
+        }
 
         var connector = new Connector();
         connector.setPort(properties.webConfig().port());
@@ -46,18 +52,18 @@ public class YawlApplication {
             throw new InvalidContextException("Unable to launch Tomcat", ex);
         }
 
+        HealthRegistry.systemUp();
         tomcat.getServer().await();
     }
 
 
     private static ApplicationProperties.Application init(Class<?> baseClass) {
-        YAMLMapper yamlMapper = YAMLMapper.builder()
-                .propertyNamingStrategy(PropertyNamingStrategies.KEBAB_CASE)
-                .build();
-        JsonMapper jsonMapper = JsonMapper.builder().build();
+        YAMLMapper yamlMapper = JacksonConfiguration.buildYamlMapper();
+        JsonMapper jsonMapper = JacksonConfiguration.buildJsonMapper();
 
         ReflectionUtil reflectionUtil = new ReflectionUtil(baseClass.getPackage().getName());
         DispatcherServlet dispatcherServlet = new DispatcherServlet(jsonMapper, reflectionUtil);
+        HealthServlet healthServlet = new HealthServlet(jsonMapper);
 
         BeanRegistry.registerBean(CommonBeans.YAML_MAPPER_NAME, yamlMapper);
         BeanRegistry.registerBean(CommonBeans.JSON_MAPPER_NAME, jsonMapper);
@@ -65,20 +71,14 @@ public class YawlApplication {
         BeanRegistry.registerBean(CommonBeans.BASE_PACKAGE_NAME_NAME, baseClass.getPackage().getName());
         BeanRegistry.registerBean(CommonBeans.REFLECTION_UTIL_NAME, reflectionUtil);
         BeanRegistry.registerBean(CommonBeans.DISPATCHER_SERVLET_NAME, dispatcherServlet);
+        BeanRegistry.registerBean(CommonBeans.HEALTH_SERVLET_NAME, healthServlet);
 
-        generateServiceBeans();
+        findAndRegisterBeans(reflectionUtil);
 
-        try {
-            var properties = yamlMapper.readValue(baseClass.getClassLoader().getResource("application.yml"), ApplicationProperties.class);
-            return properties.application();
-        } catch (IOException ex) {
-            throw new InvalidContextException("Unable to find config file, no defaults have been implemented yet", ex);
-        }
+        return initializeApplicationProperties(yamlMapper, baseClass).application();
     }
 
-    private static void generateServiceBeans() {
-        var reflectionUtil = BeanRegistry.findBeanByType(ReflectionUtil.class);
-
+    private static void findAndRegisterBeans(ReflectionUtil reflectionUtil) {
         //TODO: refactor that it doesn't matter in which order those are initialized
         reflectionUtil.getClassesAnnotatedWith(Repository.class)
                 .forEach(YawlApplication::registerBean);
@@ -93,5 +93,13 @@ public class YawlApplication {
                 .toArray();
         ConstructorUtil.newInstance(clazz, dependencies)
                 .ifPresent(instance -> BeanRegistry.registerBean(decapitalize(clazz.getSimpleName()), instance));
+    }
+
+    private static ApplicationProperties initializeApplicationProperties(YAMLMapper mapper, Class<?> baseClass) {
+        try {
+            return mapper.readValue(baseClass.getClassLoader().getResource("application.yml"), ApplicationProperties.class);
+        } catch (IOException ex) {
+            throw new InvalidContextException("Unable to find config file, no defaults have been implemented yet", ex);
+        }
     }
 }

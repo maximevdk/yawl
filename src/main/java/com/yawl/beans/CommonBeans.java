@@ -7,4 +7,5 @@ public final class CommonBeans {
     public static final String JSON_MAPPER_NAME = "jsonMapper";
     public static final String YAML_MAPPER_NAME = "yamlMapper";
     public static final String DISPATCHER_SERVLET_NAME = "dispatcherServlet";
+    public static final String HEALTH_SERVLET_NAME = "healthServlet";
 }

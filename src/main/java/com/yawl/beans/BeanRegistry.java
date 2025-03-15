@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class BeanRegistry {
+public final class BeanRegistry {
     private static final Map<String, Object> BEANS = new ConcurrentHashMap<>();
     private static final Map<Class<?>, List<Object>> BEANS_BY_TYPE = new ConcurrentHashMap<>();
 

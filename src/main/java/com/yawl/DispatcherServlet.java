@@ -47,6 +47,7 @@ public class DispatcherServlet extends HttpServlet {
 
         if (destination == null) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Route %s not found".formatted(req.getRequestURI()));
+            return;
         }
 
         var result = invokeMethod(destination);
