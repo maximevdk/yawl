@@ -2,12 +2,9 @@ package com.yawl;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.yawl.annotations.Repository;
-import com.yawl.annotations.Service;
 import com.yawl.beans.BeanRegistry;
 import com.yawl.beans.CommonBeans;
 import com.yawl.exception.InvalidContextException;
-import com.yawl.util.ConstructorUtil;
 import com.yawl.util.ReflectionUtil;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
@@ -19,8 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
-
-import static com.yawl.util.StringUtil.decapitalize;
 
 public class YawlApplication {
     private static final String TOMCAT_DIRECTORY = "./target/temp";
@@ -45,6 +40,8 @@ public class YawlApplication {
             tomcat.addServlet(properties.webConfig().contextPath(), "healthServlet", BeanRegistry.findBeanByType(HealthServlet.class));
             context.addServletMappingDecoded(properties.management().endpoint().path(), "healthServlet");
         }
+
+        new BeanCreationService(BeanRegistry.findBeanByType(ReflectionUtil.class)).findAndRegisterBeans();
 
         var connector = new Connector();
         connector.setPort(properties.webConfig().port());
@@ -78,26 +75,7 @@ public class YawlApplication {
         BeanRegistry.registerBean(CommonBeans.DISPATCHER_SERVLET_NAME, dispatcherServlet);
         BeanRegistry.registerBean(CommonBeans.HEALTH_SERVLET_NAME, healthServlet);
 
-        findAndRegisterBeans(reflectionUtil);
-
         return initializeApplicationProperties(yamlMapper, baseClass).application();
-    }
-
-    private static void findAndRegisterBeans(ReflectionUtil reflectionUtil) {
-        //TODO: refactor that it doesn't matter in which order those are initialized
-        reflectionUtil.getClassesAnnotatedWith(Repository.class)
-                .forEach(YawlApplication::registerBean);
-        reflectionUtil.getClassesAnnotatedWith(Service.class)
-                .forEach(YawlApplication::registerBean);
-    }
-
-    private static void registerBean(Class<?> clazz) {
-        log.info("Creating bean for class {}", clazz);
-        var dependencies = ConstructorUtil.getRequiredConstructorParameters(clazz).stream()
-                .map(BeanRegistry::findBeanByType)
-                .toArray();
-        ConstructorUtil.newInstance(clazz, dependencies)
-                .ifPresent(instance -> BeanRegistry.registerBean(decapitalize(clazz.getSimpleName()), instance));
     }
 
     private static ApplicationProperties initializeApplicationProperties(YAMLMapper mapper, Class<?> baseClass) {

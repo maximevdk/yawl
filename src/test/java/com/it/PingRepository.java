@@ -4,7 +4,7 @@ import com.yawl.annotations.Repository;
 
 @Repository
 public class PingRepository {
-    public String getPing() {
-        return "pong";
+    public Pong getPing(String name) {
+        return new Pong(name);
     }
 }

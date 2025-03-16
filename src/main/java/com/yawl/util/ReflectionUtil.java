@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.Set;
 
 public final class ReflectionUtil {
@@ -23,7 +24,8 @@ public final class ReflectionUtil {
 
     public Object invokeMethodOnInstance(Object instance, String methodName, Object... args) {
         try {
-            return instance.getClass().getMethod(methodName).invoke(instance, args);
+            var parameterClassTypes = Arrays.stream(args).map(Object::getClass).toArray(Class<?>[]::new);
+            return instance.getClass().getMethod(methodName, parameterClassTypes).invoke(instance, args);
         } catch (Exception ex) {
             log.error("Unable to invoke method {} on class {}", methodName, instance.getClass(), ex);
             throw NoSuchMethodException.forMethodNameAndClass(methodName, instance.getClass());

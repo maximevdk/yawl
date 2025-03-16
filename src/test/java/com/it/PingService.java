@@ -10,7 +10,7 @@ public class PingService {
         this.repository = repository;
     }
 
-    public Pong ping() {
-        return new Pong(repository.getPing());
+    public Pong ping(String name) {
+        return repository.getPing(name);
     }
 }

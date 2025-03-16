@@ -2,15 +2,16 @@ package com.yawl;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.yawl.annotations.GetMapping;
+import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.WebController;
 import com.yawl.beans.BeanRegistry;
 import com.yawl.exception.DuplicateRouteException;
-import com.yawl.model.Destination;
-import com.yawl.model.Header;
-import com.yawl.model.HttpMethod;
-import com.yawl.model.Route;
+import com.yawl.exception.NoSuchMethodException;
+import com.yawl.exception.RequiredRequestParameterMissingException;
+import com.yawl.model.*;
 import com.yawl.util.ConstructorUtil;
 import com.yawl.util.ReflectionUtil;
+import com.yawl.util.StringUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,18 +21,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
-import static com.yawl.util.StringUtil.decapitalize;
+import static com.yawl.util.StringUtils.decapitalize;
 
 public class DispatcherServlet extends HttpServlet {
     private static Logger log = LoggerFactory.getLogger(DispatcherServlet.class);
 
     private final JsonMapper mapper;
     private final ReflectionUtil reflectionUtil;
-    private Map<Route, Destination> routes;
+    private Map<Route, RequestDestination> routes;
 
     public DispatcherServlet(JsonMapper mapper, ReflectionUtil reflectionUtil) {
         this.mapper = mapper;
@@ -50,23 +49,26 @@ public class DispatcherServlet extends HttpServlet {
             return;
         }
 
-        var result = invokeMethod(destination);
-
-        if (result.isPresent()) {
-            resp.addHeader(Header.CONTENT_TYPE, destination.mediaType());
-            mapper.writeValue(resp.getOutputStream(), result.get());
-        } else {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Route %s not found".formatted(req.getRequestURI()));
+        try {
+            var result = invokeMethod(destination, req);
+            if (result.isPresent()) {
+                resp.addHeader(Header.CONTENT_TYPE, destination.method().produces().value());
+                mapper.writeValue(resp.getOutputStream(), result.get());
+            } else {
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Route %s not found".formatted(req.getRequestURI()));
+            }
+        } catch (RequiredRequestParameterMissingException ex) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
         }
     }
 
-    private Optional<Object> invokeMethod(Destination destination) {
+    private Optional<Object> invokeMethod(RequestDestination destination, HttpServletRequest request) {
         try {
             var controller = BeanRegistry.findBeanByType(destination.controller());
-            var result = reflectionUtil.invokeMethodOnInstance(controller, destination.methodName());
+            var result = reflectionUtil.invokeMethodOnInstance(controller, destination.method().name(), getQueryParameters(destination.method().parameters(), request));
             return Optional.of(result);
-        } catch (Exception ex) {
-            log.error("Unable to invoke method {} on {}.", destination.methodName(), destination, ex);
+        } catch (NoSuchMethodException ex) {
+            log.error("Unable to invoke method {} on {}.", destination.method().name(), destination, ex);
             return Optional.empty();
         }
     }
@@ -74,7 +76,7 @@ public class DispatcherServlet extends HttpServlet {
 
     private void findAndRegisterRoutes() {
         if (routes != null) {
-            log.info("Dispatcher routes already initialized, returning");
+            log.debug("Dispatcher routes already initialized, returning");
             return;
         }
         // jit route building
@@ -107,13 +109,12 @@ public class DispatcherServlet extends HttpServlet {
 
                     log.info("Found final path: {}/{}", basePath, methodPath);
 
-
                     var route = Route.of(HttpMethod.GET, basePath, methodPath);
                     if (routes.containsKey(route)) {
                         throw DuplicateRouteException.forRoute(route);
                     }
 
-                    routes.put(route, new Destination(controller, method.getName(), getMapping.produces()));
+                    routes.put(route, new RequestDestination(controller, new RequestMethod(method.getName(), getQueryParameters(method), MediaType.of(getMapping.produces()))));
                 }
             }
         }
@@ -123,5 +124,29 @@ public class DispatcherServlet extends HttpServlet {
         return ConstructorUtil.getRequiredConstructorParameters(controller).stream()
                 .map(BeanRegistry::findBeanByType)
                 .toArray();
+    }
+
+    private List<RequestParameter> getQueryParameters(Method method) {
+        return Arrays.stream(method.getParameters())
+                .filter(parameter -> parameter.isAnnotationPresent(QueryParam.class))
+                .map(parameter -> {
+                    var queryParam = parameter.getAnnotation(QueryParam.class);
+                    var queryParamName = StringUtils.hasText(queryParam.name()) ? queryParam.name() : parameter.getName();
+
+                    return new RequestParameter(queryParamName, parameter.getType(), queryParam.required());
+                })
+                .toList();
+    }
+
+    private Object[] getQueryParameters(List<RequestParameter> parameters, HttpServletRequest request) {
+        return parameters.stream().map(parameter -> {
+            var requestParameter = request.getParameter(parameter.name());
+
+            if (requestParameter == null && parameter.required()) {
+                throw RequiredRequestParameterMissingException.forParameter(parameter.name());
+            }
+
+            return StringUtils.parse(requestParameter, parameter.type());
+        }).toArray();
     }
 }
