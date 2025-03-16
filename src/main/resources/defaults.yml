@@ -1,9 +1,9 @@
 application:
-  name: yawl-test
+  name: yawl application
   web-config:
     port: 8080
     context-path: /
   management:
     endpoint:
-      enabled: true
+      enabled: false
       path: /health

@@ -6,7 +6,6 @@ import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
 import com.yawl.beans.BeanRegistry;
 import com.yawl.beans.CommonBeans;
-import com.yawl.beans.HealthRegistry;
 import com.yawl.exception.InvalidContextException;
 import com.yawl.util.ConstructorUtil;
 import com.yawl.util.ReflectionUtil;
@@ -15,24 +14,29 @@ import org.apache.catalina.startup.Tomcat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
 
 import static com.yawl.util.StringUtil.decapitalize;
 
 public class YawlApplication {
+    private static final String TOMCAT_DIRECTORY = "./target/temp";
     private static final Logger log = LoggerFactory.getLogger(YawlApplication.class);
 
     public static void run(Class<?> baseClass, String... args) {
         var properties = init(baseClass);
 
         log.info("Starting YAWL Application {} in {} on port {}", properties.name(), properties.basePath(), properties.webConfig().port());
-        HealthRegistry.systemStarting();
 
         var tomcat = new Tomcat();
-        tomcat.setBaseDir("./target");
+        tomcat.setBaseDir(TOMCAT_DIRECTORY);
         tomcat.setPort(properties.webConfig().port());
 
         var context = tomcat.addContext(properties.webConfig().contextPath(), properties.basePath());
+        context.addLifecycleListener(new TomcatLifecycleListener());
 
         tomcat.addServlet(properties.webConfig().contextPath(), "dispatcherServlet", BeanRegistry.findBeanByType(DispatcherServlet.class));
         context.addServletMappingDecoded("/*", "dispatcherServlet");
@@ -52,7 +56,8 @@ public class YawlApplication {
             throw new InvalidContextException("Unable to launch Tomcat", ex);
         }
 
-        HealthRegistry.systemUp();
+        configureRuntimeHooks();
+
         tomcat.getServer().await();
     }
 
@@ -97,9 +102,23 @@ public class YawlApplication {
 
     private static ApplicationProperties initializeApplicationProperties(YAMLMapper mapper, Class<?> baseClass) {
         try {
-            return mapper.readValue(baseClass.getClassLoader().getResource("application.yml"), ApplicationProperties.class);
-        } catch (IOException ex) {
+            return mapper.readValue(baseClass.getClassLoader().getResourceAsStream("application.yml"), ApplicationProperties.class);
+        } catch (Exception ex) {
             throw new InvalidContextException("Unable to find config file, no defaults have been implemented yet", ex);
         }
+    }
+
+    private static void configureRuntimeHooks() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try (var files = Files.walk(Paths.get(TOMCAT_DIRECTORY))) {
+                files.sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+
+                log.debug("Tomcat directory {} deleted successfully.", TOMCAT_DIRECTORY);
+            } catch (Exception ex) {
+                //ignore
+            }
+        }));
     }
 }

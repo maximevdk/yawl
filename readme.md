@@ -13,6 +13,34 @@ However, while certain aspects may appear similar, all code has been written ind
 </dependency>
 ```
 
+### Building an executable jar
+```xml
+
+<plugin>
+    <artifactId>maven-assembly-plugin</artifactId>
+    <version>3.7.1</version>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals>
+                <goal>single</goal>
+            </goals>
+        </execution>
+    </executions>
+    <configuration>
+        <archive>
+            <manifest>
+                <addClasspath>true</addClasspath>
+                <mainClass>org.example.Application</mainClass>
+            </manifest>
+        </archive>
+        <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+        </descriptorRefs>
+    </configuration>
+</plugin>
+```
+
 ## Usage
 
 ### Creating a new runnable application
@@ -25,11 +53,29 @@ public class Application {
 ```
 
 ### Creating a controller
+
 ```java
-@WebController(path = "ping")
+import com.yawl.annotations.GetMapping;
+import com.yawl.annotations.WebController;
+
+@WebController(path ="ping")
 public class PingController {
-    
+
     @GetMapping
+    public String ping() {
+        return "pong";
+    }
+}
+```
+
+### Creating a bean
+
+```java
+import com.yawl.annotations.GetMapping;
+import com.yawl.annotations.Service;
+
+@Service
+public class PingService {
     public String ping() {
         return "pong";
     }
