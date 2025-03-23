@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.Set;
 
 public class YawlApplication {
     private static final String TOMCAT_DIRECTORY = "./target/temp";
@@ -32,14 +33,7 @@ public class YawlApplication {
 
         var context = tomcat.addContext(properties.webConfig().contextPath(), properties.basePath());
         context.addLifecycleListener(new TomcatLifecycleListener());
-
-        tomcat.addServlet(properties.webConfig().contextPath(), "dispatcherServlet", BeanRegistry.findBeanByType(DispatcherServlet.class));
-        context.addServletMappingDecoded("/*", "dispatcherServlet");
-
-        if (properties.management().managementEndpointEnabled()) {
-            tomcat.addServlet(properties.webConfig().contextPath(), "healthServlet", BeanRegistry.findBeanByType(HealthServlet.class));
-            context.addServletMappingDecoded(properties.management().endpoint().path(), "healthServlet");
-        }
+        context.addServletContainerInitializer(new DefaultServletContainerInitializer(), Set.of());
 
         new BeanCreationService(BeanRegistry.findBeanByType(ReflectionUtil.class)).findAndRegisterBeans();
 
@@ -62,20 +56,17 @@ public class YawlApplication {
     private static ApplicationProperties.Application init(Class<?> baseClass) {
         YAMLMapper yamlMapper = JacksonConfiguration.buildYamlMapper();
         JsonMapper jsonMapper = JacksonConfiguration.buildJsonMapper();
-
+        ApplicationProperties properties = initializeApplicationProperties(yamlMapper, baseClass);
         ReflectionUtil reflectionUtil = new ReflectionUtil(baseClass.getPackage().getName());
-        DispatcherServlet dispatcherServlet = new DispatcherServlet(jsonMapper, reflectionUtil);
-        HealthServlet healthServlet = new HealthServlet(jsonMapper);
 
+        BeanRegistry.registerBean(CommonBeans.APPLICATION_PROPERTIES_NAME, properties.application());
         BeanRegistry.registerBean(CommonBeans.YAML_MAPPER_NAME, yamlMapper);
         BeanRegistry.registerBean(CommonBeans.JSON_MAPPER_NAME, jsonMapper);
         BeanRegistry.registerBean(CommonBeans.BASE_PACKAGE_NAME, baseClass.getPackage());
         BeanRegistry.registerBean(CommonBeans.BASE_PACKAGE_NAME_NAME, baseClass.getPackage().getName());
         BeanRegistry.registerBean(CommonBeans.REFLECTION_UTIL_NAME, reflectionUtil);
-        BeanRegistry.registerBean(CommonBeans.DISPATCHER_SERVLET_NAME, dispatcherServlet);
-        BeanRegistry.registerBean(CommonBeans.HEALTH_SERVLET_NAME, healthServlet);
 
-        return initializeApplicationProperties(yamlMapper, baseClass).application();
+        return properties.application();
     }
 
     private static ApplicationProperties initializeApplicationProperties(YAMLMapper mapper, Class<?> baseClass) {

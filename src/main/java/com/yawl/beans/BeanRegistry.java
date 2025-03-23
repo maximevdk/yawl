@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public final class BeanRegistry {
     private static final Map<String, Object> BEANS = new ConcurrentHashMap<>();
@@ -60,5 +61,11 @@ public final class BeanRegistry {
         }
 
         return (T) beansByType.getFirst();
+    }
+
+    public static Map<String, Class<?>> getBeans() {
+        return BEANS.entrySet().stream()
+                .map(entry -> Map.entry(entry.getKey(), entry.getValue().getClass()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

@@ -6,4 +6,5 @@ application:
   management:
     endpoint:
       enabled: true
+      include: health, debug
       path: /health

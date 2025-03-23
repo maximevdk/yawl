@@ -1,11 +1,20 @@
 package com.yawl;
 
+import com.yawl.model.ManagementEndpointType;
+
 import java.io.File;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public record ApplicationProperties(Application application) {
 
 
-    record Application(String name, WebConfiguration webConfig, Management management) {
+    public record Application(String name, WebConfiguration webConfig, Management management) {
+        /**
+         * Get the applications path
+         *
+         * @return the base path were Tomcat should load the classes from.
+         */
         public String basePath() {
             return new File(".").getAbsolutePath();
         }
@@ -18,8 +27,15 @@ public record ApplicationProperties(Application application) {
         boolean managementEndpointEnabled() {
             return endpoint.enabled();
         }
+
+        boolean endpointEnabled(ManagementEndpointType type) {
+            return endpoint.includes().contains(type);
+        }
     }
 
-    record ManagementEndpoint(boolean enabled, String path) {
+    record ManagementEndpoint(boolean enabled, String path, String include) {
+        public List<ManagementEndpointType> includes() {
+            return Pattern.compile("\\s?,?\\s+").splitAsStream(include).map(ManagementEndpointType::of).toList();
+        }
     }
 }
