@@ -13,7 +13,7 @@ public final class ConstructorUtil {
     private static final Logger log = LoggerFactory.getLogger(ConstructorUtil.class);
 
     public static <T> Optional<T> newInstance(Class<T> clazz, Object... args) {
-        log.info("Finding suitable constructor for controller {}", (Object) clazz.getDeclaredConstructors());
+        log.info("Finding suitable constructor for class {}", (Object) clazz.getDeclaredConstructors());
         var constructor = Arrays.stream(clazz.getDeclaredConstructors())
                 .filter(c -> c.canAccess(null))
                 .filter(c -> c.getParameterCount() == args.length)

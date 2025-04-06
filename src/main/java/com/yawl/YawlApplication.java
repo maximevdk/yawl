@@ -35,7 +35,7 @@ public class YawlApplication {
         context.addLifecycleListener(new TomcatLifecycleListener());
         context.addServletContainerInitializer(new DefaultServletContainerInitializer(), Set.of());
 
-        new BeanCreationService(BeanRegistry.findBeanByType(ReflectionUtil.class)).findAndRegisterBeans();
+        new BeanCreationService().findAndRegisterBeans();
 
         var connector = new Connector();
         connector.setPort(properties.webConfig().port());
@@ -57,14 +57,13 @@ public class YawlApplication {
         YAMLMapper yamlMapper = JacksonConfiguration.buildYamlMapper();
         JsonMapper jsonMapper = JacksonConfiguration.buildJsonMapper();
         ApplicationProperties properties = initializeApplicationProperties(yamlMapper, baseClass);
-        ReflectionUtil reflectionUtil = new ReflectionUtil(baseClass.getPackage().getName());
+        ReflectionUtil.init(baseClass.getPackage().getName());
 
         BeanRegistry.registerBean(CommonBeans.APPLICATION_PROPERTIES_NAME, properties.application());
         BeanRegistry.registerBean(CommonBeans.YAML_MAPPER_NAME, yamlMapper);
         BeanRegistry.registerBean(CommonBeans.JSON_MAPPER_NAME, jsonMapper);
         BeanRegistry.registerBean(CommonBeans.BASE_PACKAGE_NAME, baseClass.getPackage());
         BeanRegistry.registerBean(CommonBeans.BASE_PACKAGE_NAME_NAME, baseClass.getPackage().getName());
-        BeanRegistry.registerBean(CommonBeans.REFLECTION_UTIL_NAME, reflectionUtil);
 
         return properties.application();
     }

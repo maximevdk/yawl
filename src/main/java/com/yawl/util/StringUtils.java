@@ -14,10 +14,14 @@ public final class StringUtils {
             return false;
         }
 
-        return !value.isEmpty() && !value.isBlank();
+        return !value.trim().isEmpty();
     }
 
     public static String decapitalize(String string) {
+        if (string == null || string.isEmpty()) {
+            throw new IllegalArgumentException("Null or empty string provided");
+        }
+
         char c[] = string.toCharArray();
         c[0] = Character.toLowerCase(c[0]);
         return new String(c);

@@ -1,13 +1,14 @@
 package com.yawl.annotations;
 
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@NamedBean
-public @interface Repository {
+public @interface NamedBean {
+    /**
+     * The beans name, default the class name
+     *
+     * @return the name of the bean
+     */
     String name() default "";
 }

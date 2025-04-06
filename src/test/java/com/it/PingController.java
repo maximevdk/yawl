@@ -1,6 +1,7 @@
 package com.it;
 
 import com.yawl.annotations.GetMapping;
+import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.WebController;
 
@@ -15,6 +16,12 @@ public class PingController {
 
     @GetMapping
     public Pong ping(@QueryParam(name = "name") String name) {
-        return pingService.ping(name);
+        return pingService.get(name);
+    }
+
+    @PostMapping
+    public Pong setPing(@QueryParam(name = "name") String name) {
+        pingService.set(name);
+        return new Pong("POST " + name);
     }
 }

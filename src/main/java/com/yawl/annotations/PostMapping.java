@@ -1,13 +1,18 @@
 package com.yawl.annotations;
 
+import com.yawl.model.MediaType;
+import com.yawl.model.Route;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@NamedBean
-public @interface Repository {
-    String name() default "";
+@Target(ElementType.METHOD)
+public @interface PostMapping {
+    String path() default "/";
+
+    String produces() default MediaType.APPLICATION_JSON_VALUE;
+
 }

@@ -2,6 +2,7 @@ package com.yawl;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.yawl.annotations.GetMapping;
+import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.WebController;
 import com.yawl.beans.BeanRegistry;
@@ -29,12 +30,10 @@ public class DispatcherServlet extends HttpServlet {
     private static Logger log = LoggerFactory.getLogger(DispatcherServlet.class);
 
     private final JsonMapper mapper;
-    private final ReflectionUtil reflectionUtil;
     private Map<Route, RequestDestination> routes;
 
-    public DispatcherServlet(JsonMapper mapper, ReflectionUtil reflectionUtil) {
+    public DispatcherServlet(JsonMapper mapper) {
         this.mapper = mapper;
-        this.reflectionUtil = reflectionUtil;
     }
 
     @Override
@@ -64,8 +63,8 @@ public class DispatcherServlet extends HttpServlet {
 
     private Optional<Object> invokeMethod(RequestDestination destination, HttpServletRequest request) {
         try {
-            var controller = BeanRegistry.findBeanByType(destination.controller());
-            var result = reflectionUtil.invokeMethodOnInstance(controller, destination.method().name(), getQueryParameters(destination.method().parameters(), request));
+            var controller = BeanRegistry.findBeanByTypeOrThrow(destination.controller());
+            var result = ReflectionUtil.invokeMethodOnInstance(controller, destination.method().name(), getQueryParameters(destination.method().parameters(), request));
             return Optional.of(result);
         } catch (NoSuchMethodException ex) {
             log.error("Unable to invoke method {} on {}.", destination.method().name(), destination, ex);
@@ -82,7 +81,7 @@ public class DispatcherServlet extends HttpServlet {
         // jit route building
         routes = new HashMap<>();
 
-        var controllers = reflectionUtil.getClassesAnnotatedWith(WebController.class);
+        var controllers = ReflectionUtil.getClassesAnnotatedWith(WebController.class);
         log.info("Found controllers to analyze for paths {}", controllers);
 
         for (Class<?> controller : controllers) {
@@ -107,7 +106,7 @@ public class DispatcherServlet extends HttpServlet {
 
                     var methodPath = getMapping.path();
 
-                    log.info("Found final path: {}/{}", basePath, methodPath);
+                    log.info("Found final path: GET {}/{}", basePath, methodPath);
 
                     var route = Route.of(HttpMethod.GET, basePath, methodPath);
                     if (routes.containsKey(route)) {
@@ -115,6 +114,19 @@ public class DispatcherServlet extends HttpServlet {
                     }
 
                     routes.put(route, new RequestDestination(controller, new RequestMethod(method.getName(), getQueryParameters(method), MediaType.of(getMapping.produces()))));
+                } else if (method.isAnnotationPresent(PostMapping.class)) {
+                    PostMapping postMapping = method.getAnnotation(PostMapping.class);
+
+                    var methodPath = postMapping.path();
+
+                    log.info("Found final path: POST {}/{}", basePath, methodPath);
+
+                    var route = Route.of(HttpMethod.POST, basePath, methodPath);
+                    if (routes.containsKey(route)) {
+                        throw DuplicateRouteException.forRoute(route);
+                    }
+
+                    routes.put(route, new RequestDestination(controller, new RequestMethod(method.getName(), getQueryParameters(method), MediaType.of(postMapping.produces()))));
                 }
             }
         }
@@ -122,7 +134,7 @@ public class DispatcherServlet extends HttpServlet {
 
     private Object[] getConstructorParamsForController(Class<?> controller) {
         return ConstructorUtil.getRequiredConstructorParameters(controller).stream()
-                .map(BeanRegistry::findBeanByType)
+                .map(BeanRegistry::findBeanByTypeOrThrow)
                 .toArray();
     }
 

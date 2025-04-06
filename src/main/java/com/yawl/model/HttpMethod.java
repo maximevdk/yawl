@@ -1,5 +1,6 @@
 package com.yawl.model;
 
 public enum HttpMethod {
-    GET
+    GET,
+    POST
 }

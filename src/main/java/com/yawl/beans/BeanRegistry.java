@@ -14,7 +14,7 @@ public final class BeanRegistry {
     private static final Map<String, Object> BEANS = new ConcurrentHashMap<>();
     private static final Map<Class<?>, List<Object>> BEANS_BY_TYPE = new ConcurrentHashMap<>();
 
-    public static <T> void registerBean(String name, T object) {
+    public static void registerBean(String name, Object object) {
         if (object == null) {
             BEANS.remove(name);
             return;
@@ -26,6 +26,27 @@ public final class BeanRegistry {
 
         BEANS.put(name, object);
         BEANS_BY_TYPE.compute(object.getClass(), (key, value) -> {
+            if (value == null) {
+                return new ArrayList<>(List.of(object));
+            } else {
+                value.add(object);
+                return value;
+            }
+        });
+    }
+
+    public static void registerBean(String name, Object object, Class<?> clazz) {
+        if (object == null) {
+            BEANS.remove(name);
+            return;
+        }
+
+        if (BEANS.containsKey(name)) {
+            throw DuplicateBeanException.forBeanName(name);
+        }
+
+        BEANS.put(name, object);
+        BEANS_BY_TYPE.compute(clazz, (key, value) -> {
             if (value == null) {
                 return new ArrayList<>(List.of(object));
             } else {
@@ -49,7 +70,7 @@ public final class BeanRegistry {
         return (T) Optional.ofNullable(BEANS.get(name)).orElseThrow(() -> NoSuchBeanException.forName(name));
     }
 
-    public static <T> T findBeanByType(Class<T> clazz) {
+    public static <T> T findBeanByTypeOrThrow(Class<T> clazz) {
         var beansByType = BEANS_BY_TYPE.getOrDefault(clazz, List.of());
 
         if (beansByType.isEmpty()) {
@@ -61,6 +82,16 @@ public final class BeanRegistry {
         }
 
         return (T) beansByType.getFirst();
+    }
+
+    public static <T> Optional<T> findBeanByType(Class<T> clazz) {
+        var beansByType = BEANS_BY_TYPE.getOrDefault(clazz, List.of());
+
+        if (beansByType.size() > 1) {
+            throw DuplicateBeanException.forClass(clazz);
+        }
+
+        return beansByType.stream().map(item -> (T) item).findFirst();
     }
 
     public static Map<String, Class<?>> getBeans() {
