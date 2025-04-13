@@ -1,9 +1,11 @@
 package com.yawl.model;
 
+import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.List;
 
-public record RequestMethod(String name, List<RequestParameter> parameters, MediaType produces, HttpStatus status) {
+public record RequestMethod(String name, MethodHandle instance, List<RequestParameter> parameters, MediaType produces,
+                            HttpStatus status) {
 
     public static Builder builder() {
         return new Builder();
@@ -11,12 +13,18 @@ public record RequestMethod(String name, List<RequestParameter> parameters, Medi
 
     public static class Builder {
         private String name;
+        private MethodHandle instance;
         private List<RequestParameter> parameters;
         private MediaType mediaType;
         private HttpStatus status;
 
         public Builder name(String name) {
             this.name = name;
+            return this;
+        }
+
+        public Builder instance(MethodHandle instance) {
+            this.instance = instance;
             return this;
         }
 
@@ -45,7 +53,7 @@ public record RequestMethod(String name, List<RequestParameter> parameters, Medi
         }
 
         public RequestMethod build() {
-            return new RequestMethod(name, parameters, mediaType, status);
+            return new RequestMethod(name, instance, parameters, mediaType, status);
         }
 
     }

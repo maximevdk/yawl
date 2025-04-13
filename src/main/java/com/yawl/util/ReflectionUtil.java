@@ -1,6 +1,5 @@
 package com.yawl.util;
 
-import com.yawl.exception.NoSuchMethodException;
 import com.yawl.exception.NotInitializedException;
 import com.yawl.model.InvocationResult;
 import org.reflections.Reflections;
@@ -8,12 +7,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 public final class ReflectionUtil {
     private static final Logger log = LoggerFactory.getLogger(ReflectionUtil.class);
+    private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
     private static Reflections reflections = null;
 
@@ -36,17 +39,6 @@ public final class ReflectionUtil {
         return reflections.getMethodsAnnotatedWith(annotationClass);
     }
 
-    public static InvocationResult invokeMethodOnInstance(Object instance, String methodName, Object... args) {
-        try {
-            var parameterClassTypes = Arrays.stream(args).map(Object::getClass).toArray(Class<?>[]::new);
-            var method = instance.getClass().getMethod(methodName, parameterClassTypes);
-            return invokeMethodOnInstance(instance, method, args);
-        } catch (java.lang.NoSuchMethodException ex) {
-            log.error("Unable to invoke method {} on class {}", methodName, instance.getClass(), ex);
-            throw NoSuchMethodException.forMethodNameAndClass(methodName, instance.getClass());
-        }
-    }
-
     public static InvocationResult invokeMethodOnInstance(Object instance, Method method, Object... args) {
         try {
             var result = method.invoke(instance, args);
@@ -54,6 +46,25 @@ public final class ReflectionUtil {
         } catch (Exception ex) {
             log.error("Error invoking method {} on class {}", method.getName(), instance.getClass(), ex);
             return InvocationResult.failed(ex.getMessage());
+        }
+    }
+
+    public static InvocationResult invokeMethod(MethodHandle method, List<?> arguments) {
+        try {
+            return InvocationResult.success(method.invokeWithArguments(arguments));
+        } catch (Throwable ex) {
+            log.error("Error invoking method {}. Is the MethodHandle not bound to an instance?", method.toString(), ex);
+            return InvocationResult.failed(ex.getMessage());
+        }
+    }
+
+    public static MethodHandle getBoundMethodHandle(Object instance, Method method) {
+        try {
+            var handle = LOOKUP.findVirtual(instance.getClass(), method.getName(), MethodType.methodType(method.getReturnType(), method.getParameterTypes()));
+            return handle.bindTo(instance);
+        } catch (Exception ex) {
+            log.error("Unable to get MethodHandle for method {} on instance {}", method.getName(), instance.getClass());
+            throw new RuntimeException("Unable to get MethodHandle", ex);
         }
     }
 

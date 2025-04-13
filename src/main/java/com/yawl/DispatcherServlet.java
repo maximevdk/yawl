@@ -7,7 +7,6 @@ import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.WebController;
 import com.yawl.beans.BeanRegistry;
 import com.yawl.exception.DuplicateRouteException;
-import com.yawl.exception.NoSuchMethodException;
 import com.yawl.exception.RequiredRequestParameterMissingException;
 import com.yawl.model.*;
 import com.yawl.util.ConstructorUtil;
@@ -21,14 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.yawl.util.StringUtils.decapitalize;
 
 public class DispatcherServlet extends HttpServlet {
     private static Logger log = LoggerFactory.getLogger(DispatcherServlet.class);
@@ -75,15 +71,8 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     private InvocationResult invokeMethod(RequestDestination destination, HttpServletRequest request) {
-        try {
-            var controller = BeanRegistry.findBeanByTypeOrThrow(destination.controller());
-            return ReflectionUtil.invokeMethodOnInstance(controller, destination.method().name(), getQueryParameters(destination.method().parameters(), request));
-        } catch (NoSuchMethodException ex) {
-            log.error("Unable to invoke method {} on {}.", destination.method().name(), destination, ex);
-            return InvocationResult.failed(ex.getMessage());
-        }
+        return ReflectionUtil.invokeMethod(destination.method().instance(), getQueryParameters(destination.method().parameters(), request));
     }
-
 
     private void findAndRegisterRoutes() {
         if (routes != null) {
@@ -101,11 +90,9 @@ public class DispatcherServlet extends HttpServlet {
 
             //if we were unable to create a bean of the controller, we can skip looking for the methods
             var params = getConstructorParamsForController(controller);
-            var instance = ConstructorUtil.newInstance(controller, params);
-            instance.ifPresent(controllerInstance ->
-                    BeanRegistry.registerBean(decapitalize(controller.getName()), controllerInstance));
+            var controllerInstance = ConstructorUtil.newInstance(controller, params);
 
-            if (instance.isEmpty()) {
+            if (controllerInstance.isEmpty()) {
                 continue;
             }
 
@@ -128,6 +115,7 @@ public class DispatcherServlet extends HttpServlet {
                     var requestMethod = RequestMethod.builder()
                             .name(method.getName())
                             .parameters(getQueryParameters(method))
+                            .instance(ReflectionUtil.getBoundMethodHandle(controllerInstance.get(), method))
                             .mediaType(MediaType.of(getMapping.produces()))
                             .status(getMapping.status())
                             .build();
@@ -148,6 +136,7 @@ public class DispatcherServlet extends HttpServlet {
                     var requestMethod = RequestMethod.builder()
                             .name(method.getName())
                             .parameters(getQueryParameters(method))
+                            .instance(ReflectionUtil.getBoundMethodHandle(controllerInstance.get(), method))
                             .mediaType(MediaType.of(postMapping.produces()))
                             .status(postMapping.status())
                             .build();
@@ -176,7 +165,7 @@ public class DispatcherServlet extends HttpServlet {
                 .toList();
     }
 
-    private Object[] getQueryParameters(List<RequestParameter> parameters, HttpServletRequest request) {
+    private List<?> getQueryParameters(List<RequestParameter> parameters, HttpServletRequest request) {
         return parameters.stream().map(parameter -> {
             var requestParameter = request.getParameter(parameter.name());
 
@@ -185,6 +174,6 @@ public class DispatcherServlet extends HttpServlet {
             }
 
             return StringUtils.parse(requestParameter, parameter.type());
-        }).toArray();
+        }).toList();
     }
 }
