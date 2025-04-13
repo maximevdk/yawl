@@ -48,6 +48,6 @@ class BeanRegistryTest {
         BeanRegistry.registerBean("testClass", testClass);
 
         var result = BeanRegistry.findBeanByType(TestClass.class);
-        assertThat(result).isEqualTo(testClass);
+        assertThat(result).isPresent().contains(testClass);
     }
 }

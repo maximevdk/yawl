@@ -9,7 +9,7 @@ However, while certain aspects may appear similar, all code has been written ind
 <dependency>
     <groupId>com.maxime</groupId>
     <artifactId>yawl</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -58,7 +58,7 @@ public class Application {
 import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.WebController;
 
-@WebController(path ="ping")
+@WebController(path = "ping")
 public class PingController {
 
     @GetMapping
@@ -70,6 +70,8 @@ public class PingController {
 
 ### Creating a bean
 
+
+#### Using @Service annotation
 ```java
 import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.Service;
@@ -78,6 +80,17 @@ import com.yawl.annotations.Service;
 public class PingService {
     public String ping() {
         return "pong";
+    }
+}
+```
+
+#### Using a configuration class
+``` java
+@Configuration
+public class ApplicationConfiguration {
+    @Bean(name = "pongDatabase")
+    public InMemoryDatabase<String, Pong> pongDatabase() {
+        return new InMemoryDatabase<>() {};
     }
 }
 ```
