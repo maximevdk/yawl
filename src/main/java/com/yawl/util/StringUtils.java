@@ -41,4 +41,12 @@ public final class StringUtils {
 
         return (T) fn.apply(value);
     }
+
+    public static boolean isString(Object object) {
+        if (object == null) {
+            return false;
+        }
+
+        return object instanceof String;
+    }
 }

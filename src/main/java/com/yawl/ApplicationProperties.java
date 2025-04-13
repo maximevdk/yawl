@@ -1,6 +1,7 @@
 package com.yawl;
 
 import com.yawl.model.ManagementEndpointType;
+import com.yawl.util.StringUtils;
 
 import java.io.File;
 import java.util.List;
@@ -35,6 +36,10 @@ public record ApplicationProperties(Application application) {
 
     record ManagementEndpoint(boolean enabled, String path, String include) {
         public List<ManagementEndpointType> includes() {
+            if (!StringUtils.hasText(include)) {
+                return List.of();
+            }
+
             return Pattern.compile("\\s?,?\\s+").splitAsStream(include).map(ManagementEndpointType::of).toList();
         }
     }

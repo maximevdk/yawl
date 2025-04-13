@@ -21,8 +21,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.yawl.util.StringUtils.decapitalize;
 
@@ -49,26 +53,34 @@ public class DispatcherServlet extends HttpServlet {
         }
 
         try {
-            var result = invokeMethod(destination, req);
-            if (result.isPresent()) {
-                resp.addHeader(Header.CONTENT_TYPE, destination.method().produces().value());
-                mapper.writeValue(resp.getOutputStream(), result.get());
+            var methodInvocation = invokeMethod(destination, req);
+            if (methodInvocation.success()) {
+                resp.setStatus(destination.statusCode());
+
+                if (methodInvocation.resultAsOptional().isPresent()) {
+                    resp.addHeader(Header.CONTENT_TYPE, destination.produces());
+                    mapper.writeValue(resp.getOutputStream(), methodInvocation.result());
+                }
+
             } else {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Route %s not found".formatted(req.getRequestURI()));
+                var serverError = methodInvocation.resultAsOptional()
+                        .filter(StringUtils::isString)
+                        .map(result -> ServerError.internal((String) result))
+                        .orElse(ServerError.internal());
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, mapper.writeValueAsString(serverError));
             }
         } catch (RequiredRequestParameterMissingException ex) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
         }
     }
 
-    private Optional<Object> invokeMethod(RequestDestination destination, HttpServletRequest request) {
+    private InvocationResult invokeMethod(RequestDestination destination, HttpServletRequest request) {
         try {
             var controller = BeanRegistry.findBeanByTypeOrThrow(destination.controller());
-            var result = ReflectionUtil.invokeMethodOnInstance(controller, destination.method().name(), getQueryParameters(destination.method().parameters(), request));
-            return Optional.of(result);
+            return ReflectionUtil.invokeMethodOnInstance(controller, destination.method().name(), getQueryParameters(destination.method().parameters(), request));
         } catch (NoSuchMethodException ex) {
             log.error("Unable to invoke method {} on {}.", destination.method().name(), destination, ex);
-            return Optional.empty();
+            return InvocationResult.failed(ex.getMessage());
         }
     }
 
@@ -113,7 +125,14 @@ public class DispatcherServlet extends HttpServlet {
                         throw DuplicateRouteException.forRoute(route);
                     }
 
-                    routes.put(route, new RequestDestination(controller, new RequestMethod(method.getName(), getQueryParameters(method), MediaType.of(getMapping.produces()))));
+                    var requestMethod = RequestMethod.builder()
+                            .name(method.getName())
+                            .parameters(getQueryParameters(method))
+                            .mediaType(MediaType.of(getMapping.produces()))
+                            .status(getMapping.status())
+                            .build();
+
+                    routes.put(route, new RequestDestination(controller, requestMethod));
                 } else if (method.isAnnotationPresent(PostMapping.class)) {
                     PostMapping postMapping = method.getAnnotation(PostMapping.class);
 
@@ -126,7 +145,14 @@ public class DispatcherServlet extends HttpServlet {
                         throw DuplicateRouteException.forRoute(route);
                     }
 
-                    routes.put(route, new RequestDestination(controller, new RequestMethod(method.getName(), getQueryParameters(method), MediaType.of(postMapping.produces()))));
+                    var requestMethod = RequestMethod.builder()
+                            .name(method.getName())
+                            .parameters(getQueryParameters(method))
+                            .mediaType(MediaType.of(postMapping.produces()))
+                            .status(postMapping.status())
+                            .build();
+
+                    routes.put(route, new RequestDestination(controller, requestMethod));
                 }
             }
         }

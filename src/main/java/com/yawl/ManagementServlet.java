@@ -32,6 +32,8 @@ public class ManagementServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var response = new HashMap<>();
 
+        response.put("status", HealthRegistry.systemStatus());
+
         if (properties.management().endpointEnabled(ManagementEndpointType.HEALTH)) {
             response.put("health", getHealthInformation());
         }
@@ -49,7 +51,6 @@ public class ManagementServlet extends HttpServlet {
         var os = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
         return Health.builder()
-                .status(HealthRegistry.systemStatus())
                 .availableMemory(TO_MB_FN.apply(runtime.freeMemory()))
                 .totalMemory(TO_MB_FN.apply(runtime.totalMemory()))
                 .cpuUsage(TO_PERCENT_FN.apply(os.getProcessCpuLoad()))

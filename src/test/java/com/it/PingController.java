@@ -4,6 +4,7 @@ import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.WebController;
+import com.yawl.model.HttpStatus;
 
 @WebController(path = "ping")
 public class PingController {
@@ -19,7 +20,7 @@ public class PingController {
         return pingService.get(name);
     }
 
-    @PostMapping
+    @PostMapping(status = HttpStatus.ACCEPTED)
     public Pong setPing(@QueryParam(name = "name") String name) {
         pingService.set(name);
         return new Pong("POST " + name);

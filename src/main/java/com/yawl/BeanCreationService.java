@@ -2,6 +2,7 @@ package com.yawl;
 
 import com.yawl.annotations.*;
 import com.yawl.beans.BeanRegistry;
+import com.yawl.exception.UnableToInitializeBeanException;
 import com.yawl.util.ConstructorUtil;
 import com.yawl.util.ReflectionUtil;
 import com.yawl.util.StringUtils;
@@ -55,7 +56,13 @@ public class BeanCreationService {
                         public Object get() {
                             log.debug("Creating bean of type type {}.", method.getReturnType());
                             var dependencyBeans = dependencies.stream().map(wrapper -> BeanRegistry.findBeanByTypeOrThrow(wrapper.type())).toArray();
-                            return ReflectionUtil.invokeMethodOnInstance(configClassInstance, method.getName(), dependencyBeans);
+                            var invocation = ReflectionUtil.invokeMethodOnInstance(configClassInstance, method, dependencyBeans);
+
+                            if (invocation.success() && invocation.resultAsOptional().isPresent()) {
+                                return invocation.result();
+                            }
+
+                            throw UnableToInitializeBeanException.forClass(method.getReturnType());
                         }
                     };
 

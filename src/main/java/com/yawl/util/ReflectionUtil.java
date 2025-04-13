@@ -2,6 +2,7 @@ package com.yawl.util;
 
 import com.yawl.exception.NoSuchMethodException;
 import com.yawl.exception.NotInitializedException;
+import com.yawl.model.InvocationResult;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,13 +36,24 @@ public final class ReflectionUtil {
         return reflections.getMethodsAnnotatedWith(annotationClass);
     }
 
-    public static Object invokeMethodOnInstance(Object instance, String methodName, Object... args) {
+    public static InvocationResult invokeMethodOnInstance(Object instance, String methodName, Object... args) {
         try {
             var parameterClassTypes = Arrays.stream(args).map(Object::getClass).toArray(Class<?>[]::new);
-            return instance.getClass().getMethod(methodName, parameterClassTypes).invoke(instance, args);
-        } catch (Exception ex) {
+            var method = instance.getClass().getMethod(methodName, parameterClassTypes);
+            return invokeMethodOnInstance(instance, method, args);
+        } catch (java.lang.NoSuchMethodException ex) {
             log.error("Unable to invoke method {} on class {}", methodName, instance.getClass(), ex);
             throw NoSuchMethodException.forMethodNameAndClass(methodName, instance.getClass());
+        }
+    }
+
+    public static InvocationResult invokeMethodOnInstance(Object instance, Method method, Object... args) {
+        try {
+            var result = method.invoke(instance, args);
+            return InvocationResult.success(result);
+        } catch (Exception ex) {
+            log.error("Error invoking method {} on class {}", method.getName(), instance.getClass(), ex);
+            return InvocationResult.failed(ex.getMessage());
         }
     }
 

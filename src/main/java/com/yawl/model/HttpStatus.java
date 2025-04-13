@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public enum HttpStatus {
     OK(HttpServletResponse.SC_OK),
+    ACCEPTED(HttpServletResponse.SC_ACCEPTED),
     STARTING(HttpServletResponse.SC_SERVICE_UNAVAILABLE),
     ERROR(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 
