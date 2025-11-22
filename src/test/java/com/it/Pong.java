@@ -1,4 +1,4 @@
 package com.it;
 
-public record Pong(String message) {
+public record Pong(String id, String message) {
 }
