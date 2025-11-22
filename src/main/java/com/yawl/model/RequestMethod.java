@@ -4,7 +4,7 @@ import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.List;
 
-public record RequestMethod(String name, MethodHandle instance, List<RequestParameter> parameters, MediaType produces,
+public record RequestMethod(String name, MethodHandle instance, List<RequestParam> parameters, MediaType produces,
                             HttpStatus status) {
 
     public static Builder builder() {
@@ -14,7 +14,7 @@ public record RequestMethod(String name, MethodHandle instance, List<RequestPara
     public static class Builder {
         private String name;
         private MethodHandle instance;
-        private List<RequestParameter> parameters;
+        private List<RequestParam> parameters;
         private MediaType mediaType;
         private HttpStatus status;
 
@@ -28,7 +28,7 @@ public record RequestMethod(String name, MethodHandle instance, List<RequestPara
             return this;
         }
 
-        public Builder parameter(RequestParameter parameter) {
+        public Builder parameter(RequestParam parameter) {
             if (parameters == null) {
                 parameters = new ArrayList<>();
             }
@@ -37,8 +37,13 @@ public record RequestMethod(String name, MethodHandle instance, List<RequestPara
             return this;
         }
 
-        public Builder parameters(List<RequestParameter> parameters) {
-            this.parameters = new ArrayList<>(parameters);
+        public Builder addParameters(List<? extends RequestParam> requestParameters) {
+            if (parameters == null) {
+                parameters = new ArrayList<>(requestParameters);
+            } else {
+                parameters.addAll(requestParameters);
+            }
+
             return this;
         }
 

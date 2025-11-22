@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.maxime</groupId>
     <artifactId>yawl</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>yawl</name>
     <url>http://maven.apache.org</url>
@@ -104,7 +104,7 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <compilerArgs>
-                        <arg>-verbose</arg>
+                        <arg>-parameters</arg>
                         <arg>-Xlint:all,-options,-path</arg>
                     </compilerArgs>
                 </configuration>
@@ -122,6 +122,13 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <!--                <configuration>-->
+                <!--                    <argLine>&#45;&#45;parameters</argLine>-->
+                <!--                </configuration>-->
             </plugin>
         </plugins>
     </build>
