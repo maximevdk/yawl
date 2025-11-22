@@ -37,8 +37,13 @@ public record RequestMethod(String name, MethodHandle instance, List<RequestPara
             return this;
         }
 
-        public Builder parameters(List<RequestParameter> parameters) {
-            this.parameters = new ArrayList<>(parameters);
+        public Builder addParameters(List<RequestParameter> parameters) {
+            if (parameters == null) {
+                this.parameters = new ArrayList<>(parameters);
+            } else {
+                this.parameters.addAll(parameters);
+            }
+
             return this;
         }
 

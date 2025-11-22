@@ -3,6 +3,8 @@ package com.it;
 import com.yawl.annotations.Repository;
 import com.yawl.database.InMemoryDatabase;
 
+import java.util.UUID;
+
 @Repository
 public class PingRepository {
     private final InMemoryDatabase<String, Pong> pongDatabase;
@@ -11,11 +13,13 @@ public class PingRepository {
         this.pongDatabase = pongDatabase;
     }
 
-    public Pong getPing(String name) {
-        return pongDatabase.get(name);
+    public Pong getPing(String id) {
+        return pongDatabase.get(id);
     }
 
-    public void setPing(String name) {
-        pongDatabase.store(name, new Pong(name));
+    public Pong setPing(String name) {
+        var pong = new Pong(UUID.randomUUID().toString(), name);
+        pongDatabase.store(pong.id(), pong);
+        return pong;
     }
 }

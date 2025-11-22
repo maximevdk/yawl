@@ -1,10 +1,7 @@
 package com.yawl;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.yawl.annotations.GetMapping;
-import com.yawl.annotations.PostMapping;
-import com.yawl.annotations.QueryParam;
-import com.yawl.annotations.WebController;
+import com.yawl.annotations.*;
 import com.yawl.beans.BeanRegistry;
 import com.yawl.exception.DuplicateRouteException;
 import com.yawl.exception.RequiredRequestParameterMissingException;
@@ -71,7 +68,7 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     private InvocationResult invokeMethod(RequestDestination destination, HttpServletRequest request) {
-        return ReflectionUtil.invokeMethod(destination.method().instance(), getQueryParameters(destination.method().parameters(), request));
+        return ReflectionUtil.invokeMethod(destination.method().instance(), getQueryParameterValues(destination.method().parameters(), request));
     }
 
     private void findAndRegisterRoutes() {
@@ -114,7 +111,7 @@ public class DispatcherServlet extends HttpServlet {
 
                     var requestMethod = RequestMethod.builder()
                             .name(method.getName())
-                            .parameters(getQueryParameters(method))
+                            .addParameters(getQueryParameters(method))
                             .instance(ReflectionUtil.getBoundMethodHandle(controllerInstance.get(), method))
                             .mediaType(MediaType.of(getMapping.produces()))
                             .status(getMapping.status())
@@ -135,7 +132,7 @@ public class DispatcherServlet extends HttpServlet {
 
                     var requestMethod = RequestMethod.builder()
                             .name(method.getName())
-                            .parameters(getQueryParameters(method))
+                            .addParameters(getQueryParameters(method))
                             .instance(ReflectionUtil.getBoundMethodHandle(controllerInstance.get(), method))
                             .mediaType(MediaType.of(postMapping.produces()))
                             .status(postMapping.status())
@@ -153,6 +150,18 @@ public class DispatcherServlet extends HttpServlet {
                 .toArray();
     }
 
+    private List<RequestParameter> getPathParameters(Method method) {
+        return Arrays.stream(method.getParameters())
+                .filter(parameter -> parameter.isAnnotationPresent(PathParam.class))
+                .map(parameter -> {
+                    var queryParam = parameter.getAnnotation(PathParam.class);
+                    var queryParamName = StringUtils.hasText(queryParam.name()) ? queryParam.name() : parameter.getName();
+
+                    return RequestParameter.path(queryParamName, parameter.getType());
+                })
+                .toList();
+    }
+
     private List<RequestParameter> getQueryParameters(Method method) {
         return Arrays.stream(method.getParameters())
                 .filter(parameter -> parameter.isAnnotationPresent(QueryParam.class))
@@ -160,12 +169,12 @@ public class DispatcherServlet extends HttpServlet {
                     var queryParam = parameter.getAnnotation(QueryParam.class);
                     var queryParamName = StringUtils.hasText(queryParam.name()) ? queryParam.name() : parameter.getName();
 
-                    return new RequestParameter(queryParamName, parameter.getType(), queryParam.required());
+                    return RequestParameter.query(queryParamName, parameter.getType(), queryParam.required());
                 })
                 .toList();
     }
 
-    private List<?> getQueryParameters(List<RequestParameter> parameters, HttpServletRequest request) {
+    private List<?> getQueryParameterValues(List<RequestParameter> parameters, HttpServletRequest request) {
         return parameters.stream().map(parameter -> {
             var requestParameter = request.getParameter(parameter.name());
 
