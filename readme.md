@@ -67,7 +67,7 @@ public class PingController {
     }  
     
     @GetMapping("/{id}")
-    public String pingById() {
+    public String pingById(@PathParam(name = "id") String id) {
         return "pong";
     }
 }
