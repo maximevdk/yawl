@@ -1,11 +1,11 @@
 package com.yawl;
 
 import com.yawl.model.ManagementEndpointType;
+import com.yawl.util.RegexUtil;
 import com.yawl.util.StringUtils;
 
 import java.io.File;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public record ApplicationProperties(Application application) {
 
@@ -40,7 +40,7 @@ public record ApplicationProperties(Application application) {
                 return List.of();
             }
 
-            return Pattern.compile("\\s?,?\\s+").splitAsStream(include).map(ManagementEndpointType::of).toList();
+            return RegexUtil.enabledManagementEndpointsAsStream(include).map(ManagementEndpointType::of).toList();
         }
     }
 }

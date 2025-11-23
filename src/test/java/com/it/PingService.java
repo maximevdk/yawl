@@ -10,11 +10,11 @@ public class PingService {
         this.repository = repository;
     }
 
-    public Pong get(String name) {
-        return repository.getPing(name);
+    public Pong get(String id) {
+        return repository.getPing(id);
     }
 
-    public void set(String name) {
-        repository.setPing(name);
+    public Pong set(String name) {
+        return repository.setPing(name);
     }
 }
