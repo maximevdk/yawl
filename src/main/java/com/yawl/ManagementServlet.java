@@ -3,8 +3,14 @@ package com.yawl;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.sun.management.OperatingSystemMXBean;
 import com.yawl.beans.BeanRegistry;
+import com.yawl.beans.CommonBeans;
 import com.yawl.beans.HealthRegistry;
-import com.yawl.model.*;
+import com.yawl.model.Debug;
+import com.yawl.model.Header;
+import com.yawl.model.Health;
+import com.yawl.model.ManagementEndpointType;
+import com.yawl.model.MediaType;
+import com.yawl.model.Route;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
 import java.util.function.DoubleFunction;
 import java.util.function.LongFunction;
 
@@ -58,6 +64,10 @@ public class ManagementServlet extends HttpServlet {
     }
 
     private Debug getDebugInformation() {
-        return new Debug(BeanRegistry.getBeans(), Map.of());
+        var beans = new HashMap<>(BeanRegistry.getBeans());
+        beans.remove(CommonBeans.ROUTES_NAME);
+        var routes = BeanRegistry.getBeanByName(CommonBeans.ROUTES_NAME).orElse(Set.of());
+
+        return new Debug(beans, (Set<Route>) routes);
     }
 }

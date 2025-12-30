@@ -15,11 +15,6 @@ public final class BeanRegistry {
     private static final Map<Class<?>, List<Object>> BEANS_BY_TYPE = new ConcurrentHashMap<>();
 
     public static void registerBean(String name, Object object) {
-        if (object == null) {
-            BEANS.remove(name);
-            return;
-        }
-
         if (BEANS.containsKey(name)) {
             throw DuplicateBeanException.forBeanName(name);
         }
@@ -36,11 +31,6 @@ public final class BeanRegistry {
     }
 
     public static void registerBean(String name, Object object, Class<?> clazz) {
-        if (object == null) {
-            BEANS.remove(name);
-            return;
-        }
-
         if (BEANS.containsKey(name)) {
             throw DuplicateBeanException.forBeanName(name);
         }
@@ -56,8 +46,8 @@ public final class BeanRegistry {
         });
     }
 
-    public static <T> T getBeanByName(String name, Class<T> clazz) {
-        var bean = getBeanByName(name);
+    public static <T> T getBeanByNameOrThrow(String name, Class<T> clazz) {
+        var bean = getBeanByNameOrThrow(name);
 
         if (clazz == bean.getClass()) {
             return (T) bean;
@@ -66,8 +56,12 @@ public final class BeanRegistry {
         throw NoSuchBeanException.forClass(clazz);
     }
 
-    public static <T> T getBeanByName(String name) {
+    public static <T> T getBeanByNameOrThrow(String name) {
         return (T) Optional.ofNullable(BEANS.get(name)).orElseThrow(() -> NoSuchBeanException.forName(name));
+    }
+
+    public static <T> Optional<T> getBeanByName(String name) {
+        return Optional.ofNullable((T) BEANS.get(name));
     }
 
     public static <T> T findBeanByTypeOrThrow(Class<T> clazz) {
@@ -98,5 +92,10 @@ public final class BeanRegistry {
         return BEANS.entrySet().stream()
                 .map(entry -> Map.entry(entry.getKey(), entry.getValue().getClass()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    static void clear() {
+        BEANS.clear();
+        BEANS_BY_TYPE.clear();
     }
 }
