@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <jackson.version>2.18.3</jackson.version>
-        <log4j.version>2.24.3</log4j.version>
+        <log4j.version>2.25.3</log4j.version>
         <logback.version>1.5.17</logback.version>
         <tomcat.version>11.0.12</tomcat.version>
         <reflections.version>0.10.2</reflections.version>
