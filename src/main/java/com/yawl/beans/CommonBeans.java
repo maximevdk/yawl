@@ -6,4 +6,5 @@ public final class CommonBeans {
     public static final String BASE_PACKAGE_NAME_NAME = "basePackageName";
     public static final String JSON_MAPPER_NAME = "jsonMapper";
     public static final String YAML_MAPPER_NAME = "yamlMapper";
+    public static final String ROUTES_NAME = "routes";
 }

@@ -7,6 +7,7 @@ import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.WebController;
 import com.yawl.beans.BeanRegistry;
+import com.yawl.beans.CommonBeans;
 import com.yawl.exception.DuplicateRouteException;
 import com.yawl.exception.MissingPathParameterException;
 import com.yawl.exception.RequiredRequestParameterMissingException;
@@ -167,6 +168,8 @@ public class DispatcherServlet extends HttpServlet {
                 }
             }
         }
+
+        BeanRegistry.registerBean(CommonBeans.ROUTES_NAME, routes.keySet());
     }
 
     private Object[] getConstructorParamsForController(Class<?> controller) {

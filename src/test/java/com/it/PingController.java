@@ -21,6 +21,11 @@ public class PingController {
         return pingService.get(id);
     }
 
+    @GetMapping
+    public Pong pingByQuery(@QueryParam(name = "id") String id) {
+        return pingService.get(id);
+    }
+
     @PostMapping(status = HttpStatus.ACCEPTED)
     public Pong setPing(@QueryParam(name = "name") String name) {
         return pingService.set(name);
