@@ -12,6 +12,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public final class ReflectionUtil {
@@ -29,6 +30,14 @@ public final class ReflectionUtil {
         }
 
         return reflections.getTypesAnnotatedWith(annotationClass);
+    }
+
+    public static Optional<Class<?>> getClassAnnotatedWith(Class<? extends Annotation> annotationClass) {
+        if (reflections == null) {
+            throw new NotInitializedException("Call ReflectionUtil.init() before using this method");
+        }
+
+        return reflections.getTypesAnnotatedWith(annotationClass).stream().findFirst();
     }
 
     public static Set<Method> getMethodsAnnotatedWith(Class<? extends Annotation> annotationClass) {
@@ -70,5 +79,9 @@ public final class ReflectionUtil {
 
     public static void init(String basePackageName) {
         reflections = new Reflections(basePackageName);
+    }
+
+    public static boolean isInitialized() {
+        return reflections != null;
     }
 }

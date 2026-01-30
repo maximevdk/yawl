@@ -1,6 +1,5 @@
 package com.yawl;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.sun.management.OperatingSystemMXBean;
 import com.yawl.beans.BeanRegistry;
 import com.yawl.beans.CommonBeans;
@@ -15,6 +14,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;

@@ -1,8 +1,8 @@
 package com.yawl;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 public final class JacksonConfiguration {
 

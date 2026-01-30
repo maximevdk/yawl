@@ -1,12 +1,12 @@
 package com.yawl;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.yawl.beans.BeanRegistry;
 import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Set;
 
