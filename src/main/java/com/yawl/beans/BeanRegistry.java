@@ -78,6 +78,10 @@ public final class BeanRegistry {
         return (T) beansByType.getFirst();
     }
 
+    public static <T> boolean containsBeanOfType(Class<T> clazz) {
+        return !BEANS_BY_TYPE.getOrDefault(clazz, List.of()).isEmpty();
+    }
+
     public static <T> Optional<T> findBeanByType(Class<T> clazz) {
         var beansByType = BEANS_BY_TYPE.getOrDefault(clazz, List.of());
 
@@ -94,7 +98,7 @@ public final class BeanRegistry {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    static void clear() {
+    public static void clear() {
         BEANS.clear();
         BEANS_BY_TYPE.clear();
     }

@@ -1,15 +1,30 @@
 package com.yawl;
 
-import com.yawl.annotations.*;
+import com.yawl.annotations.Bean;
+import com.yawl.annotations.Configuration;
+import com.yawl.annotations.EnableHttpClients;
+import com.yawl.annotations.HttpClient;
+import com.yawl.annotations.NamedBean;
+import com.yawl.annotations.Repository;
+import com.yawl.annotations.Service;
 import com.yawl.beans.BeanRegistry;
+import com.yawl.beans.CommonBeans;
 import com.yawl.exception.UnableToInitializeBeanException;
+import com.yawl.http.ApacheHttpExecutor;
+import com.yawl.http.HttpClientInvocationHandler;
 import com.yawl.util.ConstructorUtil;
 import com.yawl.util.ReflectionUtil;
 import com.yawl.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.lang.reflect.Proxy;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -20,8 +35,10 @@ public class BeanCreationService {
     private final Map<Class<?>, BeanWrapper<?>> wrapperCache = new HashMap<>();
 
     public void findAndRegisterBeans() {
-        var beans = new HashSet<BeanWrapper<?>>();
+        ReflectionUtil.getClassAnnotatedWith(EnableHttpClients.class).ifPresent(this::createHttpClients);
+
         //TODO: fix: even though more dynamic, Configuration annotated classes need to be defined first...
+        var beans = new HashSet<BeanWrapper<?>>();
         ReflectionUtil.getClassesAnnotatedWith(Configuration.class).stream().flatMap(this::createWrappersWithSupplier).forEach(beans::add);
         ReflectionUtil.getClassesAnnotatedWith(Service.class).stream().map(this::createWrapper).forEach(beans::add);
         ReflectionUtil.getClassesAnnotatedWith(Repository.class).stream().map(this::createWrapper).forEach(beans::add);
@@ -32,6 +49,11 @@ public class BeanCreationService {
     private BeanWrapper<?> createWrapper(Class<?> clazz) {
         if (wrapperCache.containsKey(clazz)) {
             return wrapperCache.get(clazz);
+        }
+
+        if (BeanRegistry.containsBeanOfType(clazz)) {
+            //if the dependency already exists in the registry, just return a placeholder wrapper
+            return BeanWrapper.of(clazz);
         }
 
         var dependencies = ConstructorUtil.getRequiredConstructorParameters(clazz).stream()
@@ -73,9 +95,30 @@ public class BeanCreationService {
     }
 
 
+    /**
+     * Creates a proxy class for each HttpClient configured by {@code com.yawl.annotations.EnableHttpClients}
+     * @param enableHttpConfigClass a class annotated with {@code com.yawl.annotations.EnableHttpClients}
+     */
+    private void createHttpClients(Class<?> enableHttpConfigClass) {
+        var httpClients = enableHttpConfigClass.getAnnotation(EnableHttpClients.class);
+        var httpExecutor = new ApacheHttpExecutor(BeanRegistry.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME));
+
+        for (Class<?> httpClientClass : httpClients.classes()) {
+            var httpClient = httpClientClass.getAnnotation(HttpClient.class);
+
+            var proxy = Proxy.newProxyInstance(
+                    httpClientClass.getClassLoader(),
+                    new Class[]{httpClientClass},
+                    new HttpClientInvocationHandler(httpExecutor)
+            );
+
+            BeanRegistry.registerBean(httpClient.name(), proxy, httpClientClass);
+        }
+    }
+
     private void initializeBean(BeanWrapper<?> bean) {
-        var self = BeanRegistry.findBeanByType(bean.type());
-        if (self.isPresent()) {
+        if (BeanRegistry.containsBeanOfType(bean.type())) {
+            //do not re-initialize beans that are already in the bean registry
             return;
         }
 
@@ -111,7 +154,6 @@ public class BeanCreationService {
         BeanRegistry.registerBean(bean.name(), instance, bean.type());
     }
 
-
     record BeanWrapper<T>(Class<T> type, List<BeanWrapper<?>> dependencies, Supplier<T> supplier) {
         public int dependencyCount() {
             return dependencies.size();
@@ -122,6 +164,10 @@ public class BeanCreationService {
                     .map(NamedBean::name)
                     .filter(StringUtils::hasText)
                     .orElseGet(() -> decapitalize(type.getSimpleName()));
+        }
+
+        public static <T> BeanWrapper<T> of(Class<T> type) {
+            return new BeanWrapper<T>(type, List.of(), null);
         }
     }
 }

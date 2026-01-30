@@ -1,6 +1,5 @@
 package com.yawl;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.PathParam;
 import com.yawl.annotations.PostMapping;
@@ -29,6 +28,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -70,21 +70,24 @@ public class DispatcherServlet extends HttpServlet {
             var methodInvocation = invokeMethod(destination, req);
             if (methodInvocation.success()) {
                 resp.setCharacterEncoding(StandardCharsets.UTF_8);
+                resp.addHeader(Header.CONTENT_TYPE, destination.produces());
                 resp.setStatus(destination.statusCode());
 
                 if (methodInvocation.resultAsOptional().isPresent()) {
-                    resp.addHeader(Header.CONTENT_TYPE, destination.produces());
                     mapper.writeValue(resp.getOutputStream(), methodInvocation.result());
+                } else {
+                    resp.sendError(HttpServletResponse.SC_NOT_FOUND, "not found");
                 }
 
-            } else {
-                var serverError = methodInvocation.resultAsOptional()
-                        .filter(StringUtils::isString)
-                        .map(result -> ServerError.internal((String) result))
-                        .orElse(ServerError.internal());
-                resp.setCharacterEncoding(StandardCharsets.UTF_8);
-                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, mapper.writeValueAsString(serverError));
+                return;
             }
+
+            var serverError = methodInvocation.resultAsOptional()
+                    .filter(StringUtils::isString)
+                    .map(result -> ServerError.internal((String) result))
+                    .orElse(ServerError.internal());
+            resp.setCharacterEncoding(StandardCharsets.UTF_8);
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, mapper.writeValueAsString(serverError));
         } catch (RequiredRequestParameterMissingException ex) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
         }

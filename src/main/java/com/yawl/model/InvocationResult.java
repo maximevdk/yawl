@@ -12,7 +12,6 @@ public record InvocationResult(boolean success, Object result) {
         return new InvocationResult(false, reason);
     }
 
-
     public Optional<Object> resultAsOptional() {
         return Optional.ofNullable(result);
     }

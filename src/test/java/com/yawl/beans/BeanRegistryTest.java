@@ -67,4 +67,13 @@ class BeanRegistryTest {
         var result = BeanRegistry.findBeanByType(TestClass.class);
         assertThat(result).isPresent().contains(testClass);
     }
+
+    @Test
+    void containsBeanOfType() {
+        var testClass = new TestClass();
+        BeanRegistry.registerBean("testClass", testClass);
+
+        assertThat(BeanRegistry.containsBeanOfType(TestClass.class)).isTrue();
+        assertThat(BeanRegistry.containsBeanOfType(String.class)).isFalse();
+    }
 }
