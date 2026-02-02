@@ -2,9 +2,7 @@ package com.yawl;
 
 import com.sun.management.OperatingSystemMXBean;
 import com.yawl.beans.BeanRegistry;
-import com.yawl.beans.CommonBeans;
 import com.yawl.beans.HealthRegistry;
-import com.yawl.model.ApplicationProperties;
 import com.yawl.model.Header;
 import com.yawl.model.Health;
 import com.yawl.model.ManagementEndpointType;
@@ -66,10 +64,8 @@ public class ManagementServlet extends HttpServlet {
 
     private Debug getDebugInformation() {
         var beans = new HashMap<>(BeanRegistry.getBeans());
-        beans.remove(CommonBeans.ROUTES_NAME);
-        var routes = BeanRegistry.getBeanByName(CommonBeans.ROUTES_NAME).orElse(Set.of());
-
-        return new Debug(beans, (Set<Route>) routes);
+        //TODO: fix routes
+        return new Debug(beans, Set.of());
     }
 
     record Debug(Map<String, Class<?>> beans, Set<Route> routes) {

@@ -1,7 +1,5 @@
 package com.yawl;
 
-import com.yawl.beans.BeanRegistry;
-import com.yawl.model.ApplicationProperties;
 import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;

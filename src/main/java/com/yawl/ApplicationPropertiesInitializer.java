@@ -1,7 +1,6 @@
 package com.yawl;
 
 import com.yawl.exception.InvalidContextException;
-import com.yawl.model.ApplicationProperties;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
