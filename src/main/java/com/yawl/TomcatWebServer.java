@@ -1,11 +1,13 @@
 package com.yawl;
 
 import com.yawl.exception.InvalidContextException;
+import com.yawl.model.ApplicationProperties;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -18,15 +20,23 @@ class TomcatWebServer {
     private static final Logger log = LoggerFactory.getLogger(TomcatWebServer.class);
     private static final String TOMCAT_DIRECTORY = "./target/temp";
 
-    public static Tomcat start(ApplicationProperties properties) {
-        var config = properties.application().webConfig();
+    private final ApplicationProperties.Application properties;
+    private final JsonMapper jsonMapper;
+
+    TomcatWebServer(ApplicationProperties.Application properties, JsonMapper jsonMapper) {
+        this.properties = properties;
+        this.jsonMapper = jsonMapper;
+    }
+
+    public Tomcat start() {
+        var config = properties.web().config();
         var tomcat = new Tomcat();
         tomcat.setBaseDir(TOMCAT_DIRECTORY);
         tomcat.setPort(config.port());
 
-        var context = tomcat.addContext(config.contextPath(), properties.application().basePath());
+        var context = tomcat.addContext(config.contextPath(), properties.basePath());
         context.addLifecycleListener(new TomcatLifecycleListener());
-        context.addServletContainerInitializer(new DefaultServletContainerInitializer(), Set.of());
+        context.addServletContainerInitializer(new DefaultServletContainerInitializer(properties, jsonMapper), Set.of());
 
         var connector = new Connector();
         connector.setPort(config.port());
@@ -34,8 +44,12 @@ class TomcatWebServer {
         tomcat.setConnector(connector);
 
         try {
+            log.info("Starting YAWL Application {} in {} on port {}", properties.name(), properties.basePath(), config.port());
+
+            var beforeStartTime = System.currentTimeMillis();
             tomcat.start();
-            log.info("Tomcat started on path {}", tomcat.getServer().getCatalinaBase());
+            var afterStartTime = System.currentTimeMillis();
+            log.info("Tomcat started on path {} took {} ms", tomcat.getServer().getCatalinaBase(), afterStartTime - beforeStartTime);
         } catch (Exception ex) {
             log.error("Unable to launch Tomcat server", ex);
             throw new InvalidContextException("Unable to launch Tomcat", ex);

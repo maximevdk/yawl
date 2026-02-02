@@ -3,7 +3,7 @@ application:
   config:
     location: application.yml
   web:
-    enabled: true
+    enabled: false
     config:
       port: 8080
       context-path: /

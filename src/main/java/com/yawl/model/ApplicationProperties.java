@@ -1,6 +1,5 @@
-package com.yawl;
+package com.yawl.model;
 
-import com.yawl.model.ManagementEndpointType;
 import com.yawl.util.RegexUtil;
 import com.yawl.util.StringUtils;
 
@@ -8,9 +7,7 @@ import java.io.File;
 import java.util.List;
 
 public record ApplicationProperties(Application application) {
-
-
-    public record Application(String name, WebConfiguration webConfig, Management management) {
+    public record Application(String name, WebServer web, Management management) {
         /**
          * Get the applications path
          *
@@ -21,20 +18,23 @@ public record ApplicationProperties(Application application) {
         }
     }
 
-    record WebConfiguration(int port, String contextPath) {
+    public record WebServer(boolean enabled, WebConfiguration config) {
     }
 
-    record Management(ManagementEndpoint endpoint) {
-        boolean managementEndpointEnabled() {
+    public record WebConfiguration(int port, String contextPath) {
+    }
+
+    public record Management(ManagementEndpoint endpoint) {
+        public boolean managementEndpointEnabled() {
             return endpoint.enabled();
         }
 
-        boolean endpointEnabled(ManagementEndpointType type) {
+        public boolean endpointEnabled(ManagementEndpointType type) {
             return endpoint.includes().contains(type);
         }
     }
 
-    record ManagementEndpoint(boolean enabled, String path, String include) {
+    public record ManagementEndpoint(boolean enabled, String path, String include) {
         public List<ManagementEndpointType> includes() {
             if (!StringUtils.hasText(include)) {
                 return List.of();
