@@ -1,12 +1,9 @@
 package com.yawl.test.extension;
 
-import com.yawl.BeanCreationService;
-import com.yawl.JacksonConfiguration;
+import com.yawl.YawlApplication;
 import com.yawl.annotations.Autowired;
 import com.yawl.beans.BeanRegistry;
-import com.yawl.beans.CommonBeans;
 import com.yawl.test.annotation.YawlTest;
-import com.yawl.util.ReflectionUtil;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -17,17 +14,14 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 
 public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, TestInstancePostProcessor {
-    private static final String INITIALIZED_KEY = "initialized";
+    private static final String APPLICATION_CTX_KEY = "ctx";
+    private static final String DEFAULT_CONFIG_LOCATION = "-Dyaml.config.location=defaults-yawl-test.yml";
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
         if (contextNotInitialized(context)) {
-            ReflectionUtil.init(context.getRequiredTestClass().getPackageName());
-            BeanRegistry.registerBean(CommonBeans.JSON_MAPPER_NAME, JacksonConfiguration.buildJsonMapper());
-            BeanRegistry.registerBean(CommonBeans.YAML_MAPPER_NAME, JacksonConfiguration.buildYamlMapper());
-
-            new BeanCreationService().findAndRegisterBeans();
-            setContextInitialized(context);
+            var ctx = YawlApplication.run(context.getRequiredTestClass(), DEFAULT_CONFIG_LOCATION);
+            context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
         }
     }
 
@@ -44,20 +38,15 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
         var config = context.getRequiredTestClass().getAnnotation(YawlTest.class);
 
         if (config.dirtiesContext()) {
-            BeanRegistry.clear();
-            context.getStore(ExtensionContext.Namespace.GLOBAL).remove(INITIALIZED_KEY);
+            context.getStore(ExtensionContext.Namespace.GLOBAL).remove(APPLICATION_CTX_KEY);
         }
     }
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         if (contextNotInitialized(context)) {
-            ReflectionUtil.init(context.getRequiredTestClass().getPackageName());
-            BeanRegistry.registerBean(CommonBeans.JSON_MAPPER_NAME, JacksonConfiguration.buildJsonMapper());
-            BeanRegistry.registerBean(CommonBeans.YAML_MAPPER_NAME, JacksonConfiguration.buildYamlMapper());
-
-            new BeanCreationService().findAndRegisterBeans();
-            setContextInitialized(context);
+            var ctx = YawlApplication.run(context.getRequiredTestClass(), DEFAULT_CONFIG_LOCATION);
+            context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
         }
     }
 
@@ -70,10 +59,6 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
     }
 
     private boolean contextNotInitialized(ExtensionContext context) {
-        return context.getStore(ExtensionContext.Namespace.GLOBAL).get(INITIALIZED_KEY) == null;
-    }
-
-    private void setContextInitialized(ExtensionContext context) {
-        context.getStore(ExtensionContext.Namespace.GLOBAL).put(INITIALIZED_KEY, true);
+        return context.getStore(ExtensionContext.Namespace.GLOBAL).get(APPLICATION_CTX_KEY) == null;
     }
 }

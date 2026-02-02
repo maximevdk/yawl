@@ -1,6 +1,7 @@
 package com.yawl;
 
 import com.yawl.beans.BeanRegistry;
+import com.yawl.model.ApplicationProperties;
 import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -13,14 +14,20 @@ import java.util.Set;
 public class DefaultServletContainerInitializer implements ServletContainerInitializer {
     private static final Logger log = LoggerFactory.getLogger(DefaultServletContainerInitializer.class);
 
+    private final ApplicationProperties.Application properties;
+    private final JsonMapper jsonMapper;
+
+    public DefaultServletContainerInitializer(ApplicationProperties.Application properties, JsonMapper jsonMapper) {
+        this.properties = properties;
+        this.jsonMapper = jsonMapper;
+    }
+
     @Override
     public void onStartup(Set<Class<?>> c, ServletContext context) throws ServletException {
         log.info("Registering default servlets");
-        var properties = BeanRegistry.findBeanByTypeOrThrow(ApplicationProperties.Application.class);
-        var jsonMapper = BeanRegistry.findBeanByTypeOrThrow(JsonMapper.class);
 
         var dispatcherServlet = context.addServlet("dispatcherServlet", new DispatcherServlet(jsonMapper));
-        dispatcherServlet.addMapping(properties.webConfig().contextPath());
+        dispatcherServlet.addMapping(properties.web().config().contextPath());
 
         if (properties.management().managementEndpointEnabled()) {
             var managementServlet = context.addServlet("managementServlet", new ManagementServlet(jsonMapper, properties));

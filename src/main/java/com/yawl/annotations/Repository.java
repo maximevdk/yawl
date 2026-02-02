@@ -7,7 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-@NamedBean
 public @interface Repository {
     String name() default "";
 }

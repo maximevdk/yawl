@@ -4,7 +4,7 @@ import com.sun.management.OperatingSystemMXBean;
 import com.yawl.beans.BeanRegistry;
 import com.yawl.beans.CommonBeans;
 import com.yawl.beans.HealthRegistry;
-import com.yawl.model.Debug;
+import com.yawl.model.ApplicationProperties;
 import com.yawl.model.Header;
 import com.yawl.model.Health;
 import com.yawl.model.ManagementEndpointType;
@@ -19,6 +19,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.DoubleFunction;
 import java.util.function.LongFunction;
@@ -70,4 +71,8 @@ public class ManagementServlet extends HttpServlet {
 
         return new Debug(beans, (Set<Route>) routes);
     }
+
+    record Debug(Map<String, Class<?>> beans, Set<Route> routes) {
+    }
+
 }
