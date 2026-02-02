@@ -6,8 +6,8 @@ import com.yawl.annotations.EnableHttpClients;
 import com.yawl.annotations.HttpClient;
 import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
+import com.yawl.annotations.WebController;
 import com.yawl.beans.ApplicationContext;
-import com.yawl.beans.BeanRegistry;
 import com.yawl.beans.CommonBeans;
 import com.yawl.exception.UnableToInitializeBeanException;
 import com.yawl.http.ApacheHttpExecutor;
@@ -47,6 +47,7 @@ public class BeanCreationService {
         ReflectionUtil.getClassesAnnotatedWith(Configuration.class).stream().flatMap(this::createWrappersWithSupplier).forEach(beans::add);
         ReflectionUtil.getClassesAnnotatedWith(Service.class).stream().map(this::createWrapper).forEach(beans::add);
         ReflectionUtil.getClassesAnnotatedWith(Repository.class).stream().map(this::createWrapper).forEach(beans::add);
+        ReflectionUtil.getClassesAnnotatedWith(WebController.class).stream().map(this::createWrapper).forEach(beans::add);
 
         beans.forEach(this::initializeBean);
     }
@@ -145,7 +146,7 @@ public class BeanCreationService {
         log.info("Creating bean for class {}", bean);
         var dependencyBeans = bean.dependencies().stream()
                 .map(BeanWrapper::type)
-                .map(BeanRegistry::findBeanByTypeOrThrow)
+                .map(applicationContext::getBeanByTypeOrThrow)
                 .toArray();
 
         if (bean.dependencyCount() != dependencyBeans.length) {

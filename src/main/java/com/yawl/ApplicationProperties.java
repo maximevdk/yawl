@@ -22,7 +22,10 @@ public record ApplicationProperties(Application application) {
     public record WebServer(boolean enabled, WebConfiguration config) {
     }
 
-    public record WebConfiguration(int port, String contextPath) {
+    public record WebConfiguration(int port, String contextPath, VirtualThreadsConfiguration virtualThreads) {
+    }
+
+    public record VirtualThreadsConfiguration(boolean enabled, String name) {
     }
 
     public record Management(ManagementEndpoint endpoint) {

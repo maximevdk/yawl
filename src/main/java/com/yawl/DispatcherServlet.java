@@ -5,7 +5,8 @@ import com.yawl.annotations.PathParam;
 import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.WebController;
-import com.yawl.beans.BeanRegistry;
+import com.yawl.beans.ApplicationContext;
+import com.yawl.beans.CommonBeans;
 import com.yawl.exception.DuplicateRouteException;
 import com.yawl.exception.MissingPathParameterException;
 import com.yawl.exception.RequiredRequestParameterMissingException;
@@ -18,7 +19,6 @@ import com.yawl.model.RequestMethod;
 import com.yawl.model.RequestParam;
 import com.yawl.model.Route;
 import com.yawl.model.ServerError;
-import com.yawl.util.ConstructorUtil;
 import com.yawl.util.ReflectionUtil;
 import com.yawl.util.StringUtils;
 import jakarta.servlet.ServletException;
@@ -44,11 +44,13 @@ import static java.util.function.Predicate.not;
 public class DispatcherServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(DispatcherServlet.class);
 
+    private final ApplicationContext applicationContext;
     private final JsonMapper mapper;
     private Map<Route, RequestDestination> routes;
 
-    public DispatcherServlet(JsonMapper mapper) {
-        this.mapper = mapper;
+    public DispatcherServlet(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+        this.mapper = applicationContext.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME, JsonMapper.class);
     }
 
     @Override
@@ -111,8 +113,7 @@ public class DispatcherServlet extends HttpServlet {
             log.info("Scanning controller {} for mapping annotations", controller.getName());
 
             //if we were unable to create a bean of the controller, we can skip looking for the methods
-            var params = getConstructorParamsForController(controller);
-            var controllerInstance = ConstructorUtil.newInstance(controller, params).orElseThrow();
+            var controllerInstance = applicationContext.getBeanByTypeOrThrow(controller);
 
             var annotation = controller.getAnnotation(WebController.class);
             var basePath = annotation.path();
@@ -170,12 +171,6 @@ public class DispatcherServlet extends HttpServlet {
                 }
             }
         }
-    }
-
-    private Object[] getConstructorParamsForController(Class<?> controller) {
-        return ConstructorUtil.getRequiredConstructorParameters(controller).stream()
-                .map(BeanRegistry::findBeanByTypeOrThrow)
-                .toArray();
     }
 
     private List<RequestParam.PathRequestParameter> getPathParameters(Route route, Method method) {

@@ -28,7 +28,7 @@ public class YawlApplication {
         new BeanCreationService(ctx).findAndRegisterBeans();
 
         if (properties.web().enabled()) {
-            var tomcat = new TomcatWebServer(properties, jsonMapper).start();
+            var tomcat = new TomcatWebServer(ctx).start();
             //this looks like it should be the last command, other commands are not getting executed before shutdown is called
             tomcat.getServer().await();
         }

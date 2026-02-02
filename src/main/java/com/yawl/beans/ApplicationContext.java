@@ -1,13 +1,15 @@
 package com.yawl.beans;
 
-public class ApplicationContext {
+import java.util.Map;
 
-    public <T> T getBean(Class<T> clazz) {
-        return BeanRegistry.findBeanByTypeOrThrow(clazz);
-    }
+public class ApplicationContext {
 
     public <T> T getBeanByNameOrThrow(String name) {
         return BeanRegistry.getBeanByNameOrThrow(name);
+    }
+
+    public <T> T getBeanByNameOrThrow(String name, Class<T> clazz) {
+        return BeanRegistry.getBeanByNameOrThrow(name, clazz);
     }
 
     public <T> T getBeanByTypeOrThrow(Class<T> clazz) {
@@ -24,5 +26,9 @@ public class ApplicationContext {
 
     public void register(String name, Object bean, Class<?> clazz) {
         BeanRegistry.registerBean(name, bean, clazz);
+    }
+
+    public Map<String, Class<?>> beans() {
+        return BeanRegistry.getBeans();
     }
 }

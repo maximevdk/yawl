@@ -1,34 +1,35 @@
 package com.yawl;
 
+import com.yawl.beans.ApplicationContext;
+import com.yawl.beans.CommonBeans;
 import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Set;
 
 public class DefaultServletContainerInitializer implements ServletContainerInitializer {
     private static final Logger log = LoggerFactory.getLogger(DefaultServletContainerInitializer.class);
 
-    private final ApplicationProperties.Application properties;
-    private final JsonMapper jsonMapper;
+    private final ApplicationContext applicationContext;
 
-    public DefaultServletContainerInitializer(ApplicationProperties.Application properties, JsonMapper jsonMapper) {
-        this.properties = properties;
-        this.jsonMapper = jsonMapper;
+    public DefaultServletContainerInitializer(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
     @Override
     public void onStartup(Set<Class<?>> c, ServletContext context) throws ServletException {
         log.info("Registering default servlets");
+        var properties = applicationContext.getBeanByNameOrThrow(CommonBeans.APPLICATION_PROPERTIES_NAME, ApplicationProperties.Application.class);
 
-        var dispatcherServlet = context.addServlet("dispatcherServlet", new DispatcherServlet(jsonMapper));
+        var dispatcherServlet = context.addServlet("dispatcherServlet", new DispatcherServlet(applicationContext));
         dispatcherServlet.addMapping(properties.web().config().contextPath());
+        dispatcherServlet.setAsyncSupported(true);
 
         if (properties.management().managementEndpointEnabled()) {
-            var managementServlet = context.addServlet("managementServlet", new ManagementServlet(jsonMapper, properties));
+            var managementServlet = context.addServlet("managementServlet", new ManagementServlet(applicationContext));
             managementServlet.addMapping(properties.management().endpoint().path());
         }
     }

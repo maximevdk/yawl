@@ -1,7 +1,8 @@
 package com.yawl;
 
 import com.sun.management.OperatingSystemMXBean;
-import com.yawl.beans.BeanRegistry;
+import com.yawl.beans.ApplicationContext;
+import com.yawl.beans.CommonBeans;
 import com.yawl.beans.HealthRegistry;
 import com.yawl.model.Header;
 import com.yawl.model.Health;
@@ -25,12 +26,14 @@ import java.util.function.LongFunction;
 public class ManagementServlet extends HttpServlet {
     private final LongFunction<Long> TO_MB_FN = in -> in / (1024 * 1024);
     private final DoubleFunction<Double> TO_PERCENT_FN = in -> in * 100;
+    private final ApplicationContext applicationContext;
     private final ApplicationProperties.Application properties;
     private final JsonMapper mapper;
 
-    public ManagementServlet(JsonMapper mapper, ApplicationProperties.Application properties) {
-        this.mapper = mapper;
-        this.properties = properties;
+    public ManagementServlet(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+        this.mapper = applicationContext.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME, JsonMapper.class);
+        this.properties = applicationContext.getBeanByNameOrThrow(CommonBeans.APPLICATION_PROPERTIES_NAME, ApplicationProperties.Application.class);
     }
 
     @Override
@@ -63,7 +66,7 @@ public class ManagementServlet extends HttpServlet {
     }
 
     private Debug getDebugInformation() {
-        var beans = new HashMap<>(BeanRegistry.getBeans());
+        var beans = new HashMap<>(applicationContext.beans());
         //TODO: fix routes
         return new Debug(beans, Set.of());
     }
