@@ -2,6 +2,7 @@ package com.yawl.util;
 
 import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
+import com.yawl.annotations.WebController;
 import com.yawl.exception.NotABeanException;
 
 import java.lang.annotation.Annotation;
@@ -12,7 +13,7 @@ import java.util.Objects;
 import static com.yawl.util.StringUtils.decapitalize;
 
 public final class BeanUtil {
-    private static final List<Class<? extends Annotation>> ENABLED_ANNOTATIONS = List.of(Service.class, Repository.class);
+    private static final List<Class<? extends Annotation>> ENABLED_ANNOTATIONS = List.of(Service.class, Repository.class, WebController.class);
 
     public static boolean isBean(Class<?> clazz) {
         return Arrays.stream(clazz.getAnnotations())

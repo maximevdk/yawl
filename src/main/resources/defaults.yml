@@ -7,6 +7,9 @@ application:
     config:
       port: 8080
       context-path: /
+      virtual-threads:
+        enabled: true
+        name: virtual-thread-
   management:
     endpoint:
       enabled: false

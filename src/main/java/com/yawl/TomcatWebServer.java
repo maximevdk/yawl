@@ -1,12 +1,14 @@
 package com.yawl;
 
+import com.yawl.beans.ApplicationContext;
+import com.yawl.beans.CommonBeans;
 import com.yawl.exception.InvalidContextException;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.connector.Connector;
+import org.apache.catalina.core.StandardVirtualThreadExecutor;
 import org.apache.catalina.startup.Tomcat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -19,15 +21,14 @@ class TomcatWebServer {
     private static final Logger log = LoggerFactory.getLogger(TomcatWebServer.class);
     private static final String TOMCAT_DIRECTORY = "./target/temp";
 
-    private final ApplicationProperties.Application properties;
-    private final JsonMapper jsonMapper;
+    private final ApplicationContext applicationContext;
 
-    TomcatWebServer(ApplicationProperties.Application properties, JsonMapper jsonMapper) {
-        this.properties = properties;
-        this.jsonMapper = jsonMapper;
+    TomcatWebServer(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
     public Tomcat start() {
+        var properties = applicationContext.getBeanByNameOrThrow(CommonBeans.APPLICATION_PROPERTIES_NAME, ApplicationProperties.Application.class);
         var config = properties.web().config();
         var tomcat = new Tomcat();
         tomcat.setBaseDir(TOMCAT_DIRECTORY);
@@ -35,11 +36,23 @@ class TomcatWebServer {
 
         var context = tomcat.addContext(config.contextPath(), properties.basePath());
         context.addLifecycleListener(new TomcatLifecycleListener());
-        context.addServletContainerInitializer(new DefaultServletContainerInitializer(properties, jsonMapper), Set.of());
+        context.addServletContainerInitializer(new DefaultServletContainerInitializer(applicationContext), Set.of());
 
         var connector = new Connector();
         connector.setPort(config.port());
         connector.setURIEncoding("UTF-8");
+        //TODO: add property for this?
+        connector.setProperty("gracefulShutdown", "true");
+
+        //enable virtual threads when enabled
+        if (config.virtualThreads().enabled()) {
+            var executor = new StandardVirtualThreadExecutor();
+            executor.setName("virtualThreadExecutor");
+            executor.setNamePrefix(config.virtualThreads().name());
+            tomcat.getService().addExecutor(executor);
+            connector.getProtocolHandler().setExecutor(executor);
+        }
+
         tomcat.setConnector(connector);
 
         try {
