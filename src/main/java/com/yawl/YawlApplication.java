@@ -2,7 +2,6 @@ package com.yawl;
 
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
-import com.yawl.model.ApplicationProperties;
 import com.yawl.util.ReflectionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

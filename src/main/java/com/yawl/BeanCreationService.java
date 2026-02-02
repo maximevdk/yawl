@@ -56,7 +56,7 @@ public class BeanCreationService {
             return wrapperCache.get(clazz);
         }
 
-        if (BeanRegistry.containsBeanOfType(clazz)) {
+        if (applicationContext.containsBeanOfType(clazz)) {
             //if the dependency already exists in the registry, just return a placeholder wrapper
             return BeanWrapper.of(clazz);
         }

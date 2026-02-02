@@ -1,5 +1,6 @@
-package com.yawl.model;
+package com.yawl;
 
+import com.yawl.model.ManagementEndpointType;
 import com.yawl.util.RegexUtil;
 import com.yawl.util.StringUtils;
 
