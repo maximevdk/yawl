@@ -19,6 +19,7 @@ import com.yawl.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Parameter;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -63,6 +64,7 @@ public class BeanCreationService {
         }
 
         var dependencies = ConstructorUtil.getRequiredConstructorParameters(clazz).stream()
+                .map(Parameter::getType)
                 .map(this::createWrapper)
                 .toList();
 
@@ -76,15 +78,15 @@ public class BeanCreationService {
         //1. initialize configuration class
         var configClassInstance = ConstructorUtil.newInstance(clazz).orElseThrow();
         //2. return supplier for each method annotated with @Bean
-        return Arrays.stream(clazz.getMethods())
+        return Arrays.stream(clazz.getDeclaredMethods())
                 .filter(method -> method.isAnnotationPresent(Bean.class))
                 .map(method -> {
-                    var dependencies = Arrays.stream(method.getParameterTypes()).map(this::createWrapper).toList();
+                    var parameters = List.of(method.getParameters());
                     var supplier = new Supplier<>() {
                         @Override
                         public Object get() {
                             log.debug("Creating bean of type type {}.", method.getReturnType());
-                            var dependencyBeans = dependencies.stream().map(wrapper -> applicationContext.getBeanByTypeOrThrow(wrapper.type())).toArray();
+                            var dependencyBeans = parameters.stream().map(parameter -> applicationContext.getBeanByTypeOrThrow(parameter.getType())).toList();
                             var invocation = ReflectionUtil.invokeMethodOnInstance(configClassInstance, method, dependencyBeans);
 
                             if (invocation.success() && invocation.resultAsOptional().isPresent()) {
@@ -95,6 +97,7 @@ public class BeanCreationService {
                         }
                     };
                     var beanName = Optional.ofNullable(method.getAnnotation(Bean.class)).map(Bean::name).filter(StringUtils::hasText).orElse(method.getName());
+                    var dependencies = parameters.stream().map(Parameter::getType).map(this::createWrapper).toList();
                     var wrapper = new BeanWrapper(beanName, method.getReturnType(), dependencies, supplier);
                     wrapperCache.put(method.getReturnType(), wrapper);
                     return wrapper;
@@ -167,7 +170,7 @@ public class BeanCreationService {
         }
 
         public static <T> BeanWrapper<T> of(Class<T> type) {
-            return new BeanWrapper<T>(null, type, List.of(), null);
+            return new BeanWrapper<>(null, type, List.of(), null);
         }
     }
 }

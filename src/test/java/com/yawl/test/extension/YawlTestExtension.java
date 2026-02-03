@@ -15,7 +15,7 @@ import java.util.Arrays;
 
 public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, TestInstancePostProcessor {
     private static final String APPLICATION_CTX_KEY = "ctx";
-    private static final String DEFAULT_CONFIG_LOCATION = "-Dyaml.config.location=defaults-yawl-test.yml";
+    private static final String DEFAULT_CONFIG_LOCATION = "--config.location=defaults-yawl-test.yml";
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {

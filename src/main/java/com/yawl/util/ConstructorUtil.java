@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +29,7 @@ public final class ConstructorUtil {
         }
     }
 
-    public static List<Class<?>> getRequiredConstructorParameters(Class<?> clazz) {
+    public static List<Parameter> getRequiredConstructorParameters(Class<?> clazz) {
         var constructor = Arrays.stream(clazz.getDeclaredConstructors())
                 .filter(c -> c.canAccess(null))
                 .sorted((c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount())) // Reverse order
@@ -36,7 +37,7 @@ public final class ConstructorUtil {
 
 
         log.info("Found constructor with parameters {}", constructor.getParameterTypes());
-        return List.of(constructor.getParameterTypes());
+        return List.of(constructor.getParameters());
     }
 
 }

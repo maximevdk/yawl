@@ -94,7 +94,7 @@ public class DispatcherServlet extends HttpServlet {
         }
     }
 
-    private InvocationResult invokeMethod(RequestDestination destination, HttpServletRequest request) {
+    private InvocationResult<?> invokeMethod(RequestDestination destination, HttpServletRequest request) {
         return ReflectionUtil.invokeMethod(destination.method().instance(), getRequestParameterValues(destination.method().parameters(), request));
     }
 

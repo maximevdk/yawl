@@ -18,6 +18,8 @@ class YawlApplicationTest {
     private PingRepository repository;
     @Autowired
     private InMemoryDatabase<String, Pong> database;
+    @Autowired
+    private PingController controller;
 
     @Test
     void contextLoads() {
@@ -25,5 +27,13 @@ class YawlApplicationTest {
         assertThat(service).isNotNull();
         assertThat(repository).isNotNull();
         assertThat(database).isNotNull();
+        assertThat(controller).isNotNull();
+    }
+
+    @Test
+    void databaseWorks() {
+        var pong = service.set("test");
+        assertThat(pong).isNotNull();
+        assertThat(pong).isEqualTo(service.get(pong.id()));
     }
 }
