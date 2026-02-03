@@ -1,14 +1,14 @@
 package com.yawl.events;
 
-import com.yawl.annotations.EventListener;
-
 public class EventPublisher {
 
-    void publish(Event event) {
+    private final EventBus eventBus;
+
+    public EventPublisher(EventBus eventBus) {
+        this.eventBus = eventBus;
     }
 
-    @EventListener
-    public void on(ApplicationEvent.ApplicationContextInitialized event) {
-        System.out.println("ApplicationContext Initialized");
+    public void publish(Event event) {
+        eventBus.putEvent(event);
     }
 }

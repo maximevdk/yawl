@@ -2,6 +2,8 @@ package com.yawl;
 
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
+import com.yawl.events.ApplicationEvent;
+import com.yawl.events.EventPublisher;
 import com.yawl.util.ReflectionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +16,11 @@ public class YawlApplication {
 
     public static ApplicationContext run(Class<?> baseClass, String... args) {
         //initialize reflection
-        ReflectionUtil.init(baseClass.getPackage().getName());
-
+        ReflectionUtil.init(baseClass);
+        //initialize event listeners
+        var eventBus = EventListenersInitializer.createEventBus();
+        var eventPublisher = new EventPublisher(eventBus);
+        //initialize basic beans
         var yamlMapper = JacksonConfiguration.buildYamlMapper();
         var jsonMapper = JacksonConfiguration.buildJsonMapper();
         var properties = getMergedApplicationConfiguration(yamlMapper, args);
@@ -24,6 +29,9 @@ public class YawlApplication {
         ctx.register(CommonBeans.APPLICATION_PROPERTIES_NAME, properties);
         ctx.register(CommonBeans.YAML_MAPPER_NAME, yamlMapper);
         ctx.register(CommonBeans.JSON_MAPPER_NAME, jsonMapper);
+        ctx.register(CommonBeans.EVENT_PUBLISHER_NAME, eventPublisher);
+
+        eventPublisher.publish(new ApplicationEvent.ApplicationContextInitialized(ctx));
 
         new BeanCreationService(ctx).findAndRegisterBeans();
 

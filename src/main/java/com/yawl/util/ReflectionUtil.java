@@ -3,6 +3,12 @@ package com.yawl.util;
 import com.yawl.exception.NotInitializedException;
 import com.yawl.model.InvocationResult;
 import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +46,14 @@ public final class ReflectionUtil {
         return reflections.getTypesAnnotatedWith(annotationClass).stream().findFirst();
     }
 
+    public static Set<Method> getMethodsAnnotatedWith(Class<? extends Annotation> annotationClass) {
+        if (reflections == null) {
+            throw new NotInitializedException("Call ReflectionUtil.init() before using this method");
+        }
+
+        return reflections.getMethodsAnnotatedWith(annotationClass);
+    }
+
     public static InvocationResult<?> invokeMethodOnInstance(Object instance, Method method, List<?> arguments) {
         try {
             var result = method.invoke(instance, arguments.toArray());
@@ -69,11 +83,16 @@ public final class ReflectionUtil {
         }
     }
 
-    public static void init(String basePackageName) {
-        reflections = new Reflections(basePackageName);
+    public static void init(Class<?> baseClass) {
+        var config = new ConfigurationBuilder()
+                .setUrls(ClasspathHelper.forClass(baseClass))
+                .setScanners(Scanners.TypesAnnotated, Scanners.MethodsAnnotated)
+                .filterInputsBy(new FilterBuilder().includePackage(baseClass.getPackageName()));
+
+        reflections = new Reflections(config);
     }
 
-    public static boolean isInitialized() {
-        return reflections != null;
+    public static boolean notInitialized() {
+        return reflections == null;
     }
 }
