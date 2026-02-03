@@ -2,7 +2,6 @@ package com.yawl.annotations;
 
 import com.yawl.model.HttpStatus;
 import com.yawl.model.MediaType;
-import com.yawl.model.Route;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

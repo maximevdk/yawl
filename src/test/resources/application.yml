@@ -1,8 +1,5 @@
 application:
-  name: yawl-test
-  web-config:
-    port: 8080
-    context-path: /
+  name: yawl-test-overwrite
   management:
     endpoint:
       enabled: true
