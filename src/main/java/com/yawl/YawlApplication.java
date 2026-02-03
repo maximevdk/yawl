@@ -38,8 +38,8 @@ public class YawlApplication {
 
     private static ApplicationProperties.Application getMergedApplicationConfiguration(YAMLMapper yamlMapper, String... args) {
         var defaultConfigLocation = Stream.of(args)
-                .filter(arg -> arg.startsWith("-Dyaml.config.location"))
-                .map(arg -> arg.replace("-Dyaml.config.location=", ""))
+                .filter(arg -> arg.startsWith("--config.location"))
+                .map(arg -> arg.replace("--config.location=", ""))
                 .findFirst().orElse("defaults.yml");
 
         log.debug("Using default configuration location: {}", defaultConfigLocation);

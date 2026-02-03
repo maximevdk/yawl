@@ -2,17 +2,17 @@ package com.yawl.model;
 
 import java.util.Optional;
 
-public record InvocationResult(boolean success, Object result) {
+public record InvocationResult<T>(boolean success, T result) {
 
-    public static InvocationResult success(Object result) {
-        return new InvocationResult(true, result);
+    public static <T> InvocationResult<T> success(T result) {
+        return new InvocationResult<>(true, result);
     }
 
-    public static InvocationResult failed(String reason) {
-        return new InvocationResult(false, reason);
+    public static InvocationResult<String> failed(String reason) {
+        return new InvocationResult<>(false, reason);
     }
 
-    public Optional<Object> resultAsOptional() {
+    public Optional<T> resultAsOptional() {
         return Optional.ofNullable(result);
     }
 }
