@@ -2,6 +2,7 @@ package com.it;
 
 import com.yawl.annotations.Autowired;
 import com.yawl.database.InMemoryDatabase;
+import com.yawl.events.EventPublisher;
 import com.yawl.test.annotation.YawlTest;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,8 @@ class YawlApplicationTest {
     private InMemoryDatabase<String, Pong> database;
     @Autowired
     private PingController controller;
+    @Autowired
+    private EventPublisher eventPublisher;
 
     @Test
     void contextLoads() {
@@ -28,6 +31,7 @@ class YawlApplicationTest {
         assertThat(repository).isNotNull();
         assertThat(database).isNotNull();
         assertThat(controller).isNotNull();
+        assertThat(eventPublisher).isNotNull();
     }
 
     @Test
