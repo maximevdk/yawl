@@ -47,41 +47,27 @@ public record Route(@Nonnull HttpMethod method, @Nonnull String path) {
      * If the two paths are not a direct match, it will try to verify if there are path params which causes that
      * the routes don't match to each other 100%.
      *
-     * @param obj the reference object with which to compare.
+     * @param other the reference object with which to compare.
      * @return true if the routes are identical or match each other
      */
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Route other) {
-            if (this.method == other.method) {
-                if (this.path.equals(other.path)) {
-                    return true;
-                }
+    public boolean matches(Route other) {
+        if (this.method == other.method) {
+            if (this.path.equals(other.path)) {
+                return true;
+            }
 
-                if (hasPathParam()) {
-                    return RegexUtil.pathParamsToRegex(path).matcher(other.path).matches();
-                }
+            if (hasPathParam()) {
+                return RegexUtil.pathParamsToRegex(path).matcher(other.path).matches();
+            }
 
-                if (other.hasPathParam()) {
-                    return RegexUtil.pathParamsToRegex(other.path).matcher(path).matches();
-                }
+            if (other.hasPathParam()) {
+                return RegexUtil.pathParamsToRegex(other.path).matcher(path).matches();
             }
         }
 
         return false;
     }
 
-    /**
-     * Routes have the same HashCode when they have the same HttpMethod.
-     * This is a hack to make us rely on the equals method which is able to do some extra verification if the routes are
-     * similar or the same.
-     *
-     * @return hashcode of the route
-     */
-    @Override
-    public int hashCode() {
-        return method.ordinal();
-    }
 
     @Override
     public String toString() {

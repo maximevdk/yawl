@@ -33,11 +33,14 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static java.util.function.Predicate.not;
@@ -47,11 +50,12 @@ public class DispatcherServlet extends HttpServlet {
 
     private final ApplicationContext applicationContext;
     private final JsonMapper mapper;
-    private Map<Route, RequestDestination> routes;
+    private final Set<Map.Entry<Route, RequestDestination>> routes;
 
     public DispatcherServlet(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         this.mapper = applicationContext.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME, JsonMapper.class);
+        this.routes = new HashSet<>();
     }
 
     @Override
@@ -62,17 +66,18 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         log.info("Handling request {} - {}", req.getMethod(), req.getRequestURI());
-        var destination = routes.get(Route.of(HttpMethod.valueOf(req.getMethod()), req.getRequestURI()));
+        var requestedRoute = Route.of(HttpMethod.valueOf(req.getMethod()), req.getRequestURI());
+        var destinationOptional = findMatchingRoute(requestedRoute);
 
-        if (destination == null) {
-            resp.setCharacterEncoding(StandardCharsets.UTF_8);
+        if (destinationOptional.isEmpty()) {
             var notFound = HttpResponse.notFound("Route %s not found".formatted(req.getRequestURI()));
             sendResponse(notFound, resp);
             return;
         }
 
         try {
-            var methodInvocation = invokeMethod(destination, req);
+            var destination = destinationOptional.get();
+            var methodInvocation = invokeMethod(destination.method(), req);
             if (methodInvocation.success()) {
                 resp.setCharacterEncoding(StandardCharsets.UTF_8);
                 resp.addHeader(Header.CONTENT_TYPE, destination.produces());
@@ -102,26 +107,19 @@ public class DispatcherServlet extends HttpServlet {
         response.sendError(value.status().getCode(), mapper.writeValueAsString(value));
     }
 
-    private InvocationResult<?> invokeMethod(RequestDestination destination, HttpServletRequest request) {
-        return ReflectionUtil.invokeMethod(destination.method().instance(), getRequestParameterValues(destination.method().parameters(), request));
+    private InvocationResult<?> invokeMethod(RequestMethod method, HttpServletRequest request) {
+        return ReflectionUtil.invokeMethod(method.instance(), getRequestParameterValues(method.parameters(), request));
     }
 
     private void findAndRegisterRoutes() {
-        if (routes != null) {
-            log.debug("Dispatcher routes already initialized, returning");
-            return;
-        }
-        // jit route building
-        routes = new HashMap<>();
-
         var controllers = ReflectionUtil.getClassesAnnotatedWith(WebController.class);
         log.info("Found controllers to analyze for paths {}", controllers);
 
         for (Class<?> controller : controllers) {
-            log.info("Scanning controller {} for mapping annotations", controller.getName());
-
             //if we were unable to create a bean of the controller, we can skip looking for the methods
             var controllerInstance = applicationContext.getBeanByTypeOrThrow(controller);
+
+            log.info("Scanning controller {} for mapping annotations", controller.getName());
 
             var annotation = controller.getAnnotation(WebController.class);
             var basePath = annotation.path();
@@ -147,7 +145,7 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     private void registerRoute(Route route, MediaType produces, HttpStatus httpStatus, Method method, Object controllerInstance) {
-        if (routes.containsKey(route)) {
+        if (findMatchingRoute(route).isPresent()) {
             throw DuplicateRouteException.forRoute(route);
         }
 
@@ -164,7 +162,7 @@ public class DispatcherServlet extends HttpServlet {
         validatePathVariables(route, pathParameters);
 
         log.info("Found final path: {}", route);
-        routes.put(route, new RequestDestination(controllerInstance.getClass(), requestMethod));
+        routes.add(new AbstractMap.SimpleImmutableEntry(route, new RequestDestination(controllerInstance.getClass(), requestMethod)));
     }
 
     private List<RequestParam.PathRequestParameter> getPathParameters(Route route, Method method) {
@@ -231,5 +229,12 @@ public class DispatcherServlet extends HttpServlet {
         if (!unconfiguredPathParams.isEmpty()) {
             throw MissingPathParameterException.forPath(route, unconfiguredPathParams.getFirst());
         }
+    }
+
+    private Optional<RequestDestination> findMatchingRoute(Route route) {
+        return routes.stream()
+                .filter(entry -> entry.getKey().matches(route))
+                .map(Map.Entry::getValue)
+                .findFirst();
     }
 }
