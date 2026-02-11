@@ -12,13 +12,14 @@ import com.yawl.exception.MissingPathParameterException;
 import com.yawl.exception.RequiredRequestParameterMissingException;
 import com.yawl.model.Header;
 import com.yawl.model.HttpMethod;
+import com.yawl.model.HttpResponse;
+import com.yawl.model.HttpStatus;
 import com.yawl.model.InvocationResult;
 import com.yawl.model.MediaType;
 import com.yawl.model.RequestDestination;
 import com.yawl.model.RequestMethod;
 import com.yawl.model.RequestParam;
 import com.yawl.model.Route;
-import com.yawl.model.ServerError;
 import com.yawl.util.ReflectionUtil;
 import com.yawl.util.StringUtils;
 import jakarta.servlet.ServletException;
@@ -54,16 +55,19 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     @Override
+    public void init() throws ServletException {
+        findAndRegisterRoutes();
+    }
+
+    @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         log.info("Handling request {} - {}", req.getMethod(), req.getRequestURI());
-        findAndRegisterRoutes();
-
         var destination = routes.get(Route.of(HttpMethod.valueOf(req.getMethod()), req.getRequestURI()));
 
         if (destination == null) {
-            var message = "Route %s not found".formatted(req.getRequestURI());
             resp.setCharacterEncoding(StandardCharsets.UTF_8);
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND, message);
+            var notFound = HttpResponse.notFound("Route %s not found".formatted(req.getRequestURI()));
+            sendResponse(notFound, resp);
             return;
         }
 
@@ -77,7 +81,7 @@ public class DispatcherServlet extends HttpServlet {
                 if (methodInvocation.resultAsOptional().isPresent()) {
                     mapper.writeValue(resp.getOutputStream(), methodInvocation.result());
                 } else {
-                    resp.sendError(HttpServletResponse.SC_NOT_FOUND, "not found");
+                    sendResponse(HttpResponse.notFound("not found"), resp);
                 }
 
                 return;
@@ -85,13 +89,17 @@ public class DispatcherServlet extends HttpServlet {
 
             var serverError = methodInvocation.resultAsOptional()
                     .filter(StringUtils::isString)
-                    .map(result -> ServerError.internal((String) result))
-                    .orElse(ServerError.internal());
-            resp.setCharacterEncoding(StandardCharsets.UTF_8);
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, mapper.writeValueAsString(serverError));
+                    .map(result -> HttpResponse.internal((String) result))
+                    .orElse(HttpResponse.internal());
+            sendResponse(serverError, resp);
         } catch (RequiredRequestParameterMissingException ex) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            sendResponse(HttpResponse.badRequest(ex.getMessage()), resp);
         }
+    }
+
+    private void sendResponse(HttpResponse value, HttpServletResponse response) throws IOException {
+        response.setCharacterEncoding(StandardCharsets.UTF_8);
+        response.sendError(value.status().getCode(), mapper.writeValueAsString(value));
     }
 
     private InvocationResult<?> invokeMethod(RequestDestination destination, HttpServletRequest request) {
@@ -125,52 +133,38 @@ public class DispatcherServlet extends HttpServlet {
                     var methodPath = getMapping.path();
                     var route = Route.of(HttpMethod.GET, basePath, methodPath);
 
-                    if (routes.containsKey(route)) {
-                        throw DuplicateRouteException.forRoute(route);
-                    }
-
-                    var pathParameters = getPathParameters(route, method);
-
-                    var requestMethod = RequestMethod.builder()
-                            .name(method.getName())
-                            .addParameters(pathParameters)
-                            .addParameters(getQueryParameters(method))
-                            .instance(ReflectionUtil.getBoundMethodHandle(controllerInstance, method))
-                            .mediaType(MediaType.of(getMapping.produces()))
-                            .status(getMapping.status())
-                            .build();
-
-                    validatePathVariables(route, pathParameters);
-
-                    log.info("Found final path: {}", route);
-                    routes.put(route, new RequestDestination(controller, requestMethod));
+                    registerRoute(route, MediaType.of(getMapping.produces()), getMapping.status(), method, controllerInstance);
                 } else if (method.isAnnotationPresent(PostMapping.class)) {
                     PostMapping postMapping = method.getAnnotation(PostMapping.class);
 
                     var methodPath = postMapping.path();
                     var route = Route.of(HttpMethod.POST, basePath, methodPath);
 
-                    if (routes.containsKey(route)) {
-                        throw DuplicateRouteException.forRoute(route);
-                    }
-
-                    var pathParameters = getPathParameters(route, method);
-                    var requestMethod = RequestMethod.builder()
-                            .name(method.getName())
-                            .addParameters(pathParameters)
-                            .addParameters(getQueryParameters(method))
-                            .instance(ReflectionUtil.getBoundMethodHandle(controllerInstance, method))
-                            .mediaType(MediaType.of(postMapping.produces()))
-                            .status(postMapping.status())
-                            .build();
-
-                    validatePathVariables(route, pathParameters);
-
-                    log.info("Found final path: {}", route);
-                    routes.put(route, new RequestDestination(controller, requestMethod));
+                    registerRoute(route, MediaType.of(postMapping.produces()), postMapping.status(), method, controllerInstance);
                 }
             }
         }
+    }
+
+    private void registerRoute(Route route, MediaType produces, HttpStatus httpStatus, Method method, Object controllerInstance) {
+        if (routes.containsKey(route)) {
+            throw DuplicateRouteException.forRoute(route);
+        }
+
+        var pathParameters = getPathParameters(route, method);
+        var requestMethod = RequestMethod.builder()
+                .name(method.getName())
+                .addParameters(pathParameters)
+                .addParameters(getQueryParameters(method))
+                .instance(ReflectionUtil.getBoundMethodHandle(controllerInstance, method))
+                .mediaType(produces)
+                .status(httpStatus)
+                .build();
+
+        validatePathVariables(route, pathParameters);
+
+        log.info("Found final path: {}", route);
+        routes.put(route, new RequestDestination(controllerInstance.getClass(), requestMethod));
     }
 
     private List<RequestParam.PathRequestParameter> getPathParameters(Route route, Method method) {
