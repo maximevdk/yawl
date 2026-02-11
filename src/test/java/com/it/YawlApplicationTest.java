@@ -37,7 +37,7 @@ class YawlApplicationTest {
     @Test
     void databaseWorks() {
         var pong = service.set("test");
-        assertThat(pong).isNotNull();
+        assertThat(pong.id()).isNotNull();
         assertThat(pong).isEqualTo(service.get(pong.id()));
     }
 }
