@@ -1,7 +1,7 @@
 package com.yawl.annotations;
 
-import com.yawl.model.HttpStatus;
-import com.yawl.model.MediaType;
+import com.yawl.http.model.ContentType;
+import com.yawl.http.model.HttpStatus;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 public @interface GetMapping {
     String path() default "/";
 
-    String produces() default MediaType.APPLICATION_JSON_VALUE;
+    String produces() default ContentType.APPLICATION_JSON_VALUE;
 
     HttpStatus status() default HttpStatus.OK;
 }

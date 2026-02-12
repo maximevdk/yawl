@@ -1,6 +1,6 @@
 package com.yawl.exception;
 
-import com.yawl.model.Route;
+import com.yawl.http.model.Route;
 
 public class MissingPathParameterException extends RuntimeException {
     private static final String MESSAGE = "Missing @PathParam [%s] annotation for route [%s]";

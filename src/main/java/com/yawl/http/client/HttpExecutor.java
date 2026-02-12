@@ -1,4 +1,4 @@
-package com.yawl.http;
+package com.yawl.http.client;
 
 import java.lang.reflect.Type;
 
