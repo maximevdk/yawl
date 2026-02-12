@@ -1,4 +1,4 @@
-package com.yawl.http;
+package com.yawl.http.client;
 
 import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.HttpClient;
@@ -7,7 +7,7 @@ import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.RequestBody;
 import com.yawl.annotations.RequestHeader;
-import com.yawl.model.HttpMethod;
+import com.yawl.http.model.HttpMethod;
 import org.apache.hc.core5.net.URIBuilder;
 
 import java.lang.reflect.InvocationHandler;

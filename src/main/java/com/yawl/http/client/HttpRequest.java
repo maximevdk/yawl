@@ -1,6 +1,6 @@
-package com.yawl.http;
+package com.yawl.http.client;
 
-import com.yawl.model.HttpMethod;
+import com.yawl.http.model.HttpMethod;
 
 import java.net.URI;
 import java.util.List;

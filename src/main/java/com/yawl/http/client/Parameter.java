@@ -1,4 +1,4 @@
-package com.yawl.http;
+package com.yawl.http.client;
 
 record Parameter(String name, Object value, In in) {
 

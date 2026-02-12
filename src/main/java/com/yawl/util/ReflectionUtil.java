@@ -1,11 +1,9 @@
 package com.yawl.util;
 
 import com.yawl.exception.NotInitializedException;
-import com.yawl.model.InvocationResult;
+import com.yawl.model.Invocation;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
@@ -54,22 +52,13 @@ public final class ReflectionUtil {
         return reflections.getMethodsAnnotatedWith(annotationClass);
     }
 
-    public static InvocationResult<?> invokeMethodOnInstance(Object instance, Method method, List<?> arguments) {
+    public static Invocation<?> invoke(Method method, Object instance, List<?> arguments) {
         try {
             var result = method.invoke(instance, arguments.toArray());
-            return InvocationResult.success(result);
+            return Invocation.success(result);
         } catch (Exception ex) {
             log.error("Error invoking method {} on class {}", method.getName(), instance.getClass(), ex);
-            return InvocationResult.failed(ex.getMessage());
-        }
-    }
-
-    public static InvocationResult<?> invokeMethod(MethodHandle method, List<?> arguments) {
-        try {
-            return InvocationResult.success(method.invokeWithArguments(arguments));
-        } catch (Throwable ex) {
-            log.error("Error invoking method {}. Is the MethodHandle not bound to an instance?", method.toString(), ex);
-            return InvocationResult.failed(ex.getMessage());
+            return Invocation.failed(ex.getMessage());
         }
     }
 

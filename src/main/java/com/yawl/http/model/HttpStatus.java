@@ -1,4 +1,4 @@
-package com.yawl.model;
+package com.yawl.http.model;
 
 import jakarta.servlet.http.HttpServletResponse;
 

@@ -1,12 +1,19 @@
 package com.yawl.events;
 
 import com.yawl.beans.ApplicationContext;
+import com.yawl.http.model.RegisteredRoute;
 
-import static com.yawl.events.ApplicationEvent.*;
+import java.util.List;
 
-public sealed interface ApplicationEvent extends Event permits ApplicationContextInitialized {
+import static com.yawl.events.ApplicationEvent.ApplicationContextInitialized;
+import static com.yawl.events.ApplicationEvent.RouteRegistryInitialized;
+
+public sealed interface ApplicationEvent extends Event permits ApplicationContextInitialized, RouteRegistryInitialized {
 
     record ApplicationContextInitialized(ApplicationContext applicationContext) implements ApplicationEvent {
+    }
+
+    record RouteRegistryInitialized(List<RegisteredRoute> routes) implements ApplicationEvent {
     }
 
 }

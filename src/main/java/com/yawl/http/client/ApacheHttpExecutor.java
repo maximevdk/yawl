@@ -1,4 +1,4 @@
-package com.yawl.http;
+package com.yawl.http.client;
 
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
@@ -16,7 +16,6 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
-import java.util.List;
 
 public class ApacheHttpExecutor implements HttpExecutor {
     private static final Logger log = LoggerFactory.getLogger(ApacheHttpExecutor.class);

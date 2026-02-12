@@ -5,7 +5,7 @@ import com.yawl.annotations.PathParam;
 import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.WebController;
-import com.yawl.model.HttpStatus;
+import com.yawl.http.model.HttpStatus;
 
 @WebController(path = "ping")
 public class PingController {

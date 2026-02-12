@@ -1,4 +1,4 @@
-package com.yawl.model;
+package com.yawl.http.model;
 
 public enum HttpMethod {
     GET,

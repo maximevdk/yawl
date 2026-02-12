@@ -10,8 +10,8 @@ import com.yawl.annotations.WebController;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
 import com.yawl.exception.UnableToInitializeBeanException;
-import com.yawl.http.ApacheHttpExecutor;
-import com.yawl.http.HttpClientInvocationHandler;
+import com.yawl.http.client.ApacheHttpExecutor;
+import com.yawl.http.client.HttpClientInvocationHandler;
 import com.yawl.util.BeanUtil;
 import com.yawl.util.ConstructorUtil;
 import com.yawl.util.ReflectionUtil;
@@ -87,7 +87,7 @@ public class BeanCreationService {
                         public Object get() {
                             log.debug("Creating bean of type type {}.", method.getReturnType());
                             var dependencyBeans = parameters.stream().map(parameter -> applicationContext.getBeanByTypeOrThrow(parameter.getType())).toList();
-                            var invocation = ReflectionUtil.invokeMethodOnInstance(configClassInstance, method, dependencyBeans);
+                            var invocation = ReflectionUtil.invoke(method, configClassInstance, dependencyBeans);
 
                             if (invocation.success() && invocation.resultAsOptional().isPresent()) {
                                 return invocation.result();

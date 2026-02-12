@@ -1,14 +1,17 @@
 package com.yawl;
 
 import com.sun.management.OperatingSystemMXBean;
+import com.yawl.annotations.EventListener;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
 import com.yawl.beans.HealthRegistry;
-import com.yawl.model.Header;
+import com.yawl.events.ApplicationEvent;
+import com.yawl.http.model.ContentType;
+import com.yawl.http.model.Header;
+import com.yawl.http.model.RegisteredRoute;
+import com.yawl.http.model.Route;
 import com.yawl.model.Health;
 import com.yawl.model.ManagementEndpointType;
-import com.yawl.model.MediaType;
-import com.yawl.model.Route;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,11 +20,13 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.DoubleFunction;
 import java.util.function.LongFunction;
+import java.util.stream.Collectors;
 
 public class ManagementServlet extends HttpServlet {
     private final LongFunction<Long> TO_MB_FN = in -> in / (1024 * 1024);
@@ -29,11 +34,18 @@ public class ManagementServlet extends HttpServlet {
     private final ApplicationContext applicationContext;
     private final ApplicationProperties.Application properties;
     private final JsonMapper mapper;
+    private final List<RegisteredRoute> routes;
 
     public ManagementServlet(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         this.mapper = applicationContext.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME, JsonMapper.class);
         this.properties = applicationContext.getBeanByNameOrThrow(CommonBeans.APPLICATION_PROPERTIES_NAME, ApplicationProperties.Application.class);
+        this.routes = new ArrayList<>();
+    }
+
+    @EventListener
+    public void on(ApplicationEvent.RouteRegistryInitialized event) {
+        routes.addAll(event.routes());
     }
 
     @Override
@@ -50,7 +62,7 @@ public class ManagementServlet extends HttpServlet {
             response.put("debug", getDebugInformation());
         }
 
-        resp.setHeader(Header.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        resp.setHeader(Header.CONTENT_TYPE, ContentType.APPLICATION_JSON_VALUE);
         mapper.writeValue(resp.getOutputStream(), response);
     }
 
@@ -67,11 +79,11 @@ public class ManagementServlet extends HttpServlet {
 
     private Debug getDebugInformation() {
         var beans = new HashMap<>(applicationContext.beans());
-        //TODO: fix routes
-        return new Debug(beans, Set.of());
+        var routesMap = routes.stream().collect(Collectors.toMap(RegisteredRoute::route, registeredRoute -> registeredRoute.method().getDeclaringClass()));
+        return new Debug(beans, routesMap);
     }
 
-    record Debug(Map<String, Class<?>> beans, Set<Route> routes) {
+    record Debug(Map<String, Class<?>> beans, Map<Route, ? extends Class<?>> routes) {
     }
 
 }

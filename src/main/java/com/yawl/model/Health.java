@@ -1,5 +1,7 @@
 package com.yawl.model;
 
+import com.yawl.http.model.HttpStatus;
+
 public record Health(Long availableMemory, Long totalMemory, Long usedMemory, double cpuUsage) {
 
     private static Health newHealth(Builder builder) {
