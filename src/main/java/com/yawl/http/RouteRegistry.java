@@ -1,5 +1,6 @@
 package com.yawl.http;
 
+import com.yawl.annotations.DeleteMapping;
 import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.WebController;
@@ -43,6 +44,11 @@ public class RouteRegistry {
                     var postMapping = method.getAnnotation(PostMapping.class);
                     var route = Route.post(webController.path(), postMapping.path());
                     var responseInfo = new ResponseInfo(ContentType.of(postMapping.produces()), postMapping.status());
+                    registerRoute(route, method, responseInfo);
+                } else if (method.isAnnotationPresent(DeleteMapping.class)) {
+                    var deleteMapping = method.getAnnotation(DeleteMapping.class);
+                    var route = Route.delete(webController.path(), deleteMapping.path());
+                    var responseInfo = new ResponseInfo(ContentType.of(deleteMapping.produces()), deleteMapping.status());
                     registerRoute(route, method, responseInfo);
                 }
             }

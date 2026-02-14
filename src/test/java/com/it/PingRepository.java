@@ -22,4 +22,8 @@ public class PingRepository {
         pongDatabase.store(pong.id(), pong);
         return pong;
     }
+
+    public void delete(String id) {
+        pongDatabase.delete(id);
+    }
 }

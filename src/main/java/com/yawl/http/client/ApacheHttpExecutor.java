@@ -1,5 +1,6 @@
 package com.yawl.http.client;
 
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -41,6 +42,7 @@ public class ApacheHttpExecutor implements HttpExecutor {
             var http = switch (request.method()) {
                 case GET -> new HttpGet(request.uri());
                 case POST -> new HttpPost(request.uri());
+                case DELETE -> new HttpDelete(request.uri());
             };
 
             var uri = new URIBuilder(request.uri());

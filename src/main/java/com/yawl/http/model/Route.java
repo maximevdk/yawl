@@ -18,6 +18,10 @@ public record Route(@Nonnull HttpMethod method, @Nonnull PathPattern pattern) {
         return new Route(HttpMethod.POST, PathPattern.parse(String.join("/", paths)));
     }
 
+    public static Route delete(String... paths) {
+        return new Route(HttpMethod.DELETE, PathPattern.parse(String.join("/", paths)));
+    }
+
     public List<String> pathParamNames() {
         return pattern.captureNames();
     }
