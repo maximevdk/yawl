@@ -26,16 +26,15 @@ public class ManagementServlet extends HttpServlet {
     private static final LongFunction<Long> TO_MB_FN = in -> in / (1024 * 1024);
     private static final DoubleFunction<Double> TO_PERCENT_FN = in -> in * 100;
 
+    private final Map<Route, Class<?>> routes = new HashMap<>();
+    private final Map<String, Class<?>> beans = new HashMap<>();
+
     private final ApplicationProperties.Application properties;
     private final JsonMapper mapper;
-    private final Map<Route, Class<?>> routes;
-    private final Map<String, Class<?>> beans;
 
     public ManagementServlet(ApplicationProperties.Application properties, JsonMapper mapper) {
         this.mapper = mapper;
         this.properties = properties;
-        this.routes = new HashMap<>();
-        this.beans = new HashMap<>();
     }
 
     @EventListener
