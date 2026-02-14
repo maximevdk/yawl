@@ -9,26 +9,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public final class BeanRegistry {
+final class BeanRegistry {
     private static final Map<String, Object> BEANS = new ConcurrentHashMap<>();
     private static final Map<Class<?>, List<Object>> BEANS_BY_TYPE = new ConcurrentHashMap<>();
-
-    public static void registerBean(String name, Object object) {
-        if (BEANS.containsKey(name)) {
-            throw DuplicateBeanException.forBeanName(name);
-        }
-
-        BEANS.put(name, object);
-        BEANS_BY_TYPE.compute(object.getClass(), (key, value) -> {
-            if (value == null) {
-                return new ArrayList<>(List.of(object));
-            } else {
-                value.add(object);
-                return value;
-            }
-        });
-    }
 
     public static void registerBean(String name, Object object, Class<?> clazz) {
         if (BEANS.containsKey(name)) {
@@ -92,10 +77,14 @@ public final class BeanRegistry {
         return beansByType.stream().map(item -> (T) item).findFirst();
     }
 
-    public static Map<String, Class<?>> getBeans() {
+    public static Map<String, Class<?>> getBeansByName() {
         return BEANS.entrySet().stream()
                 .map(entry -> Map.entry(entry.getKey(), entry.getValue().getClass()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    public static Stream<Object> getBeans() {
+        return BEANS.values().stream();
     }
 
     public static void clear() {

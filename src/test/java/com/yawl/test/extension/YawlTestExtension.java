@@ -2,7 +2,7 @@ package com.yawl.test.extension;
 
 import com.yawl.YawlApplication;
 import com.yawl.annotations.Autowired;
-import com.yawl.beans.BeanRegistry;
+import com.yawl.beans.ApplicationContext;
 import com.yawl.test.annotation.YawlTest;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -27,10 +27,10 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
 
     @Override
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
+        var ctx = (ApplicationContext) context.getStore(ExtensionContext.Namespace.GLOBAL).get(APPLICATION_CTX_KEY);
         Arrays.stream(testInstance.getClass().getDeclaredFields())
                 .filter(field -> field.isAnnotationPresent(Autowired.class))
-                .peek(field -> field.setAccessible(true))
-                .forEach(field -> setFieldValue(testInstance, field));
+                .forEach(field -> setFieldValue(testInstance, field, ctx.getBeanByTypeOrThrow(field.getType())));
     }
 
     @Override
@@ -50,9 +50,10 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
         }
     }
 
-    private void setFieldValue(Object testInstance, Field field) {
+    private void setFieldValue(Object testInstance, Field field, Object value) {
         try {
-            field.set(testInstance, BeanRegistry.findBeanByTypeOrThrow(field.getType()));
+            field.setAccessible(true);
+            field.set(testInstance, value);
         } catch (IllegalAccessException ex) {
             throw new RuntimeException("Unable to set value for field: " + field.getName(), ex);
         }

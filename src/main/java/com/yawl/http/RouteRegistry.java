@@ -3,13 +3,13 @@ package com.yawl.http;
 import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.WebController;
+import com.yawl.beans.ApplicationContext;
 import com.yawl.exception.DuplicateRouteException;
 import com.yawl.http.model.ContentType;
 import com.yawl.http.model.HttpMethod;
 import com.yawl.http.model.RegisteredRoute;
 import com.yawl.http.model.ResponseInfo;
 import com.yawl.http.model.Route;
-import com.yawl.util.ReflectionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,18 +20,14 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- *
+ * Registry of the available routes in the application
  */
 public class RouteRegistry {
     private static final Logger log = LoggerFactory.getLogger(RouteRegistry.class);
-    private final Map<Route, RegisteredRoute> destinations;
+    private final Map<Route, RegisteredRoute> destinations = new HashMap<>();
 
-    public RouteRegistry() {
-        this.destinations = new HashMap<>();
-    }
-
-    public void init() {
-        var controllers = ReflectionUtil.getClassesAnnotatedWith(WebController.class);
+    public void init(ApplicationContext applicationContext) {
+        var controllers = applicationContext.getBeansAnnotatedWith(WebController.class);
 
         for (Class<?> controller : controllers) {
             log.info("Analyzing controller for routes {}", controller);
@@ -78,6 +74,4 @@ public class RouteRegistry {
 
         destinations.put(route, new RegisteredRoute(route, method, info));
     }
-
-
 }

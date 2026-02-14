@@ -3,7 +3,9 @@ package com.yawl;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
 import com.yawl.events.ApplicationEvent;
+import com.yawl.events.EventListenerRegistrar;
 import com.yawl.events.EventPublisher;
+import com.yawl.events.EventRegistry;
 import com.yawl.util.ReflectionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,26 +19,30 @@ public class YawlApplication {
     public static ApplicationContext run(Class<?> baseClass, String... args) {
         //initialize reflection
         ReflectionUtil.init(baseClass);
-        //initialize event listeners
-        var eventBus = EventListenersInitializer.createEventBus();
-        var eventPublisher = new EventPublisher(eventBus);
-        //initialize basic beans
+
+        //initialize and register basic beans
         var yamlMapper = JacksonConfiguration.buildYamlMapper();
         var jsonMapper = JacksonConfiguration.buildJsonMapper();
         var properties = getMergedApplicationConfiguration(yamlMapper, args);
+        //initialize event handler
+        var registry = new EventRegistry<>();
+        var eventListenerRegistrar = new EventListenerRegistrar(registry);
 
         var ctx = new ApplicationContext();
         ctx.register(CommonBeans.APPLICATION_PROPERTIES_NAME, properties);
         ctx.register(CommonBeans.YAML_MAPPER_NAME, yamlMapper);
         ctx.register(CommonBeans.JSON_MAPPER_NAME, jsonMapper);
-        ctx.register(CommonBeans.EVENT_PUBLISHER_NAME, eventPublisher);
+        ctx.register(CommonBeans.EVENT_REGISTRY_NAME, eventListenerRegistrar);
+        ctx.register(CommonBeans.EVENT_PUBLISHER, registry, EventPublisher.class);
 
-        eventPublisher.publish(new ApplicationEvent.ApplicationContextInitialized(ctx));
-
-        new BeanCreationService(ctx).findAndRegisterBeans();
+        //initialize user defined beans
+        var beanCreationService = new BeanCreationService(ctx, eventListenerRegistrar);
+        beanCreationService.findAndRegisterBeans();
+        registry.publish(new ApplicationEvent.ApplicationContextInitialized(ctx));
 
         if (properties.web().enabled()) {
             var tomcat = new TomcatWebServer(ctx).start();
+            registry.publish(new ApplicationEvent.ApplicationContextRefreshed(ctx));
             //this looks like it should be the last command, other commands are not getting executed before shutdown is called
             tomcat.getServer().await();
         }

@@ -28,22 +28,21 @@ import java.util.Optional;
 
 public class DispatcherServlet extends HttpServlet {
 
-    private final EventPublisher eventPublisher;
     private final JsonMapper jsonMapper;
     private final ApplicationContext applicationContext;
     private final RouteRegistry routeRegistry;
 
     public DispatcherServlet(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
-        this.eventPublisher = applicationContext.getBeanByNameOrThrow(CommonBeans.EVENT_PUBLISHER_NAME);
         this.jsonMapper = applicationContext.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME);
         this.routeRegistry = new RouteRegistry();
     }
 
     @Override
     public void init() throws ServletException {
-        routeRegistry.init();
-        eventPublisher.publish(new ApplicationEvent.RouteRegistryInitialized(routeRegistry.getRoutes()));
+        routeRegistry.init(applicationContext);
+        applicationContext.getBeanByTypeOrThrow(EventPublisher.class)
+                .publish(new ApplicationEvent.RouteRegistryInitialized(routeRegistry.getRoutes()));
     }
 
     @Override

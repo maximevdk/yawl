@@ -1,7 +1,6 @@
 package com.yawl.util;
 
 import com.yawl.exception.NotInitializedException;
-import com.yawl.model.Invocation;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import org.reflections.util.ClasspathHelper;
@@ -11,9 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
@@ -21,61 +17,36 @@ import java.util.Set;
 
 public final class ReflectionUtil {
     private static final Logger log = LoggerFactory.getLogger(ReflectionUtil.class);
-    private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
-
     private static Reflections reflections = null;
 
     private ReflectionUtil() {
     }
 
     public static Set<Class<?>> getClassesAnnotatedWith(Class<? extends Annotation> annotationClass) {
-        if (reflections == null) {
+        if (notInitialized()) {
             throw new NotInitializedException("Call ReflectionUtil.init() before using this method");
         }
 
         return reflections.getTypesAnnotatedWith(annotationClass);
     }
 
-    public static Optional<Class<?>> getClassAnnotatedWith(Class<? extends Annotation> annotationClass) {
-        if (reflections == null) {
-            throw new NotInitializedException("Call ReflectionUtil.init() before using this method");
-        }
-
-        return reflections.getTypesAnnotatedWith(annotationClass).stream().findFirst();
-    }
-
-    public static Set<Method> getMethodsAnnotatedWith(Class<? extends Annotation> annotationClass) {
-        if (reflections == null) {
-            throw new NotInitializedException("Call ReflectionUtil.init() before using this method");
-        }
-
-        return reflections.getMethodsAnnotatedWith(annotationClass);
-    }
-
-    public static Invocation<?> invoke(Method method, Object instance, List<?> arguments) {
+    public static <T> Optional<T> invoke(Method method, Object instance, List<?> arguments) {
         try {
-            var result = method.invoke(instance, arguments.toArray());
-            return Invocation.success(result);
+            if (method.getReturnType() == void.class) {
+                throw new IllegalArgumentException("Method returns void");
+            }
+
+            return Optional.ofNullable((T) method.invoke(instance, arguments.toArray()));
         } catch (Exception ex) {
             log.error("Error invoking method {} on class {}", method.getName(), instance.getClass(), ex);
-            return Invocation.failed(ex.getMessage());
-        }
-    }
-
-    public static MethodHandle getBoundMethodHandle(Object instance, Method method) {
-        try {
-            var handle = LOOKUP.findVirtual(instance.getClass(), method.getName(), MethodType.methodType(method.getReturnType(), method.getParameterTypes()));
-            return handle.bindTo(instance);
-        } catch (Exception ex) {
-            log.error("Unable to get MethodHandle for method {} on instance {}", method.getName(), instance.getClass());
-            throw new RuntimeException("Unable to get MethodHandle", ex);
+            return Optional.empty();
         }
     }
 
     public static void init(Class<?> baseClass) {
         var config = new ConfigurationBuilder()
                 .setUrls(ClasspathHelper.forClass(baseClass))
-                .setScanners(Scanners.TypesAnnotated, Scanners.MethodsAnnotated)
+                .setScanners(Scanners.TypesAnnotated)
                 .filterInputsBy(new FilterBuilder().includePackage(baseClass.getPackageName()));
 
         reflections = new Reflections(config);

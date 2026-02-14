@@ -9,6 +9,7 @@ import com.yawl.annotations.Service;
 import com.yawl.annotations.WebController;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
+import com.yawl.events.EventListenerRegistrar;
 import com.yawl.exception.UnableToInitializeBeanException;
 import com.yawl.http.client.ApacheHttpExecutor;
 import com.yawl.http.client.HttpClientInvocationHandler;
@@ -32,16 +33,17 @@ import java.util.stream.Stream;
 
 public class BeanCreationService {
     private static final Logger log = LoggerFactory.getLogger(BeanCreationService.class);
-    private final Map<Class<?>, BeanWrapper<?>> wrapperCache;
+    private final Map<Class<?>, BeanWrapper<?>> wrapperCache = new HashMap<>();
     private final ApplicationContext applicationContext;
+    private final EventListenerRegistrar eventListenerRegistrar;
 
-    public BeanCreationService(ApplicationContext applicationContext) {
-        this.wrapperCache = new HashMap<>();
+    public BeanCreationService(ApplicationContext applicationContext, EventListenerRegistrar eventListenerRegistrar) {
         this.applicationContext = applicationContext;
+        this.eventListenerRegistrar = eventListenerRegistrar;
     }
 
     public void findAndRegisterBeans() {
-        ReflectionUtil.getClassAnnotatedWith(EnableHttpClients.class).ifPresent(this::createHttpClients);
+        ReflectionUtil.getClassesAnnotatedWith(EnableHttpClients.class).forEach(this::createHttpClients);
 
         //TODO: fix: even though more dynamic, Configuration annotated classes need to be defined first...
         var beans = new HashSet<BeanWrapper<?>>();
@@ -87,13 +89,8 @@ public class BeanCreationService {
                         public Object get() {
                             log.debug("Creating bean of type type {}.", method.getReturnType());
                             var dependencyBeans = parameters.stream().map(parameter -> applicationContext.getBeanByTypeOrThrow(parameter.getType())).toList();
-                            var invocation = ReflectionUtil.invoke(method, configClassInstance, dependencyBeans);
-
-                            if (invocation.success() && invocation.resultAsOptional().isPresent()) {
-                                return invocation.result();
-                            }
-
-                            throw UnableToInitializeBeanException.forClass(method.getReturnType());
+                            return ReflectionUtil.invoke(method, configClassInstance, dependencyBeans)
+                                    .orElseThrow(() -> UnableToInitializeBeanException.forClass(method.getReturnType()));
                         }
                     };
                     var beanName = Optional.ofNullable(method.getAnnotation(Bean.class)).map(Bean::name).filter(StringUtils::hasText).orElse(method.getName());
@@ -162,6 +159,7 @@ public class BeanCreationService {
 
     private void registerBean(BeanWrapper<?> bean, Object instance) {
         applicationContext.register(bean.name(), instance, bean.type());
+        eventListenerRegistrar.registerBean(instance);
     }
 
     record BeanWrapper<T>(String name, Class<T> type, List<BeanWrapper<?>> dependencies, Supplier<T> supplier) {
