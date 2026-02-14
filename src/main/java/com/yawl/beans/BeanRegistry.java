@@ -83,7 +83,7 @@ final class BeanRegistry {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    public static Stream<Object> getBeans() {
+    public static Stream<Object> streamBeans() {
         return BEANS.values().stream();
     }
 

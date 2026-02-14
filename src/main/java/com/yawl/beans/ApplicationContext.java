@@ -31,7 +31,7 @@ public class ApplicationContext {
     }
 
     public List<Class<?>> getBeansAnnotatedWith(Class<? extends Annotation> annotation) {
-        return BeanRegistry.getBeans()
+        return BeanRegistry.streamBeans()
                 .<Class<?>>map(Object::getClass)
                 .filter(clazz -> clazz.isAnnotationPresent(annotation))
                 .toList();
