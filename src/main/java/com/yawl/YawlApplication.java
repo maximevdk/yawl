@@ -31,7 +31,7 @@ public class YawlApplication {
         ctx.register(CommonBeans.APPLICATION_PROPERTIES_NAME, properties);
         ctx.register(CommonBeans.YAML_MAPPER_NAME, yamlMapper);
         ctx.register(CommonBeans.JSON_MAPPER_NAME, jsonMapper);
-        ctx.register(CommonBeans.EVENT_PUBLISHER, registry, EventPublisher.class);
+        ctx.register(CommonBeans.EVENT_PUBLISHER_NAME, registry, EventPublisher.class);
 
         //initialize user defined beans
         var beanCreationService = new BeanCreationService(ctx, registry);
