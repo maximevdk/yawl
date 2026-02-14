@@ -6,7 +6,6 @@ import com.yawl.beans.HealthRegistry;
 import com.yawl.events.ApplicationEvent;
 import com.yawl.http.model.ContentType;
 import com.yawl.http.model.Header;
-import com.yawl.http.model.RegisteredRoute;
 import com.yawl.http.model.Route;
 import com.yawl.model.Health;
 import com.yawl.model.ManagementEndpointType;
@@ -18,13 +17,10 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.DoubleFunction;
 import java.util.function.LongFunction;
-import java.util.stream.Collectors;
 
 public class ManagementServlet extends HttpServlet {
     private static final LongFunction<Long> TO_MB_FN = in -> in / (1024 * 1024);
@@ -32,19 +28,20 @@ public class ManagementServlet extends HttpServlet {
 
     private final ApplicationProperties.Application properties;
     private final JsonMapper mapper;
-    private final List<RegisteredRoute> routes;
+    private final Map<Route, Class<?>> routes;
     private final Map<String, Class<?>> beans;
 
     public ManagementServlet(ApplicationProperties.Application properties, JsonMapper mapper) {
         this.mapper = mapper;
         this.properties = properties;
-        this.routes = new ArrayList<>();
+        this.routes = new HashMap<>();
         this.beans = new HashMap<>();
     }
 
     @EventListener
     public void on(ApplicationEvent.RouteRegistryInitialized event) {
-        routes.addAll(event.routes());
+        event.routes().stream()
+                .forEach(route -> routes.put(route.route(), route.method().getDeclaringClass()));
     }
 
     @EventListener
@@ -63,7 +60,7 @@ public class ManagementServlet extends HttpServlet {
         }
 
         if (properties.management().endpointEnabled(ManagementEndpointType.DEBUG)) {
-            response.put("debug", getDebugInformation());
+            response.put("debug", new Debug(beans, routes));
         }
 
         resp.setHeader(Header.CONTENT_TYPE, ContentType.APPLICATION_JSON_VALUE);
@@ -79,11 +76,6 @@ public class ManagementServlet extends HttpServlet {
                 .totalMemory(TO_MB_FN.apply(runtime.totalMemory()))
                 .cpuUsage(TO_PERCENT_FN.apply(os.getProcessCpuLoad()))
                 .build();
-    }
-
-    private Debug getDebugInformation() {
-        var routesMap = routes.stream().collect(Collectors.toMap(RegisteredRoute::route, registeredRoute -> registeredRoute.method().getDeclaringClass()));
-        return new Debug(beans, routesMap);
     }
 
     record Debug(Map<String, Class<?>> beans, Map<Route, ? extends Class<?>> routes) {
