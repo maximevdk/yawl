@@ -3,7 +3,6 @@ package com.yawl;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
 import com.yawl.events.ApplicationEvent;
-import com.yawl.events.EventListenerRegistrar;
 import com.yawl.events.EventPublisher;
 import com.yawl.events.EventRegistry;
 import com.yawl.util.ReflectionUtil;
@@ -24,23 +23,28 @@ public class YawlApplication {
         var yamlMapper = JacksonConfiguration.buildYamlMapper();
         var jsonMapper = JacksonConfiguration.buildJsonMapper();
         var properties = getMergedApplicationConfiguration(yamlMapper, args);
+
         //initialize event handler
-        var registry = new EventRegistry<>();
-        var eventListenerRegistrar = new EventListenerRegistrar(registry);
+        var registry = new EventRegistry();
 
         var ctx = new ApplicationContext();
         ctx.register(CommonBeans.APPLICATION_PROPERTIES_NAME, properties);
         ctx.register(CommonBeans.YAML_MAPPER_NAME, yamlMapper);
         ctx.register(CommonBeans.JSON_MAPPER_NAME, jsonMapper);
-        ctx.register(CommonBeans.EVENT_REGISTRY_NAME, eventListenerRegistrar);
         ctx.register(CommonBeans.EVENT_PUBLISHER, registry, EventPublisher.class);
 
         //initialize user defined beans
-        var beanCreationService = new BeanCreationService(ctx, eventListenerRegistrar);
+        var beanCreationService = new BeanCreationService(ctx, registry);
         beanCreationService.findAndRegisterBeans();
         registry.publish(new ApplicationEvent.ApplicationContextInitialized(ctx));
 
         if (properties.web().enabled()) {
+            if (properties.management().managementEndpointEnabled()) {
+                var servlet = new ManagementServlet(properties, jsonMapper);
+                ctx.register("managementServlet", servlet);
+                registry.registerListeners(servlet);
+            }
+
             var tomcat = new TomcatWebServer(ctx).start();
             registry.publish(new ApplicationEvent.ApplicationContextRefreshed(ctx));
             //this looks like it should be the last command, other commands are not getting executed before shutdown is called
