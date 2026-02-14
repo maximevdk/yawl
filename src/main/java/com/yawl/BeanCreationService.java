@@ -9,7 +9,7 @@ import com.yawl.annotations.Service;
 import com.yawl.annotations.WebController;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
-import com.yawl.events.EventListenerRegistrar;
+import com.yawl.events.EventRegistry;
 import com.yawl.exception.UnableToInitializeBeanException;
 import com.yawl.http.client.ApacheHttpExecutor;
 import com.yawl.http.client.HttpClientInvocationHandler;
@@ -35,11 +35,11 @@ public class BeanCreationService {
     private static final Logger log = LoggerFactory.getLogger(BeanCreationService.class);
     private final Map<Class<?>, BeanWrapper<?>> wrapperCache = new HashMap<>();
     private final ApplicationContext applicationContext;
-    private final EventListenerRegistrar eventListenerRegistrar;
+    private final EventRegistry eventRegistry;
 
-    public BeanCreationService(ApplicationContext applicationContext, EventListenerRegistrar eventListenerRegistrar) {
+    public BeanCreationService(ApplicationContext applicationContext, EventRegistry eventRegistry) {
         this.applicationContext = applicationContext;
-        this.eventListenerRegistrar = eventListenerRegistrar;
+        this.eventRegistry = eventRegistry;
     }
 
     public void findAndRegisterBeans() {
@@ -159,7 +159,7 @@ public class BeanCreationService {
 
     private void registerBean(BeanWrapper<?> bean, Object instance) {
         applicationContext.register(bean.name(), instance, bean.type());
-        eventListenerRegistrar.registerBean(instance);
+        eventRegistry.registerListeners(instance);
     }
 
     record BeanWrapper<T>(String name, Class<T> type, List<BeanWrapper<?>> dependencies, Supplier<T> supplier) {
