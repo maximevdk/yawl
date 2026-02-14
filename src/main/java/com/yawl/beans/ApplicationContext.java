@@ -1,5 +1,7 @@
 package com.yawl.beans;
 
+import java.lang.annotation.Annotation;
+import java.util.List;
 import java.util.Map;
 
 public class ApplicationContext {
@@ -21,14 +23,21 @@ public class ApplicationContext {
     }
 
     public void register(String name, Object bean) {
-        BeanRegistry.registerBean(name, bean);
+        register(name, bean, bean.getClass());
     }
 
     public void register(String name, Object bean, Class<?> clazz) {
         BeanRegistry.registerBean(name, bean, clazz);
     }
 
-    public Map<String, Class<?>> beans() {
-        return BeanRegistry.getBeans();
+    public List<Class<?>> getBeansAnnotatedWith(Class<? extends Annotation> annotation) {
+        return BeanRegistry.getBeans()
+                .<Class<?>>map(Object::getClass)
+                .filter(clazz -> clazz.isAnnotationPresent(annotation))
+                .toList();
+    }
+
+    public Map<String, Class<?>> beansByName() {
+        return BeanRegistry.getBeansByName();
     }
 }

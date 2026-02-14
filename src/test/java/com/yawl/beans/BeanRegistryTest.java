@@ -18,7 +18,7 @@ class BeanRegistryTest {
     @Test
     void registerBeanAndGetBeanByName() {
         var testClass = new TestClass();
-        BeanRegistry.registerBean("testClass", testClass);
+        BeanRegistry.registerBean("testClass", testClass, testClass.getClass());
 
         var result = BeanRegistry.getBeanByNameOrThrow("testClass");
         assertThat(result).isEqualTo(testClass);
@@ -27,7 +27,7 @@ class BeanRegistryTest {
     @Test
     void registerBeanAndGetBeanByNameAndType() {
         var testClass = new TestClass();
-        BeanRegistry.registerBean("testClass", testClass);
+        BeanRegistry.registerBean("testClass", testClass, testClass.getClass());
 
         var result = BeanRegistry.getBeanByNameOrThrow("testClass", TestClass.class);
         assertThat(result).isEqualTo(testClass);
@@ -36,7 +36,7 @@ class BeanRegistryTest {
     @Test
     void registerBeanAndGetBeanByNameAndType_nonExistent_throws() {
         var testClass = new TestClass();
-        BeanRegistry.registerBean("testClass", testClass);
+        BeanRegistry.registerBean("testClass", testClass, testClass.getClass());
 
         assertThatThrownBy(() -> BeanRegistry.getBeanByNameOrThrow("testClass", String.class))
                 .isInstanceOf(NoSuchBeanException.class);
@@ -45,7 +45,7 @@ class BeanRegistryTest {
     @Test
     void registerBeanAndGetBeanByName_nonExistent_throws() {
         var testClass = new TestClass();
-        BeanRegistry.registerBean("testClass", testClass);
+        BeanRegistry.registerBean("testClass", testClass, testClass.getClass());
 
         assertThatThrownBy(() -> BeanRegistry.getBeanByNameOrThrow("testClazz"))
                 .isInstanceOf(NoSuchBeanException.class);
@@ -54,7 +54,7 @@ class BeanRegistryTest {
     @Test
     void registerBeanAndGetBeanByName_nonExistant_returnsEmpty() {
         var testClass = new TestClass();
-        BeanRegistry.registerBean("testClass", testClass);
+        BeanRegistry.registerBean("testClass", testClass, testClass.getClass());
 
         assertThat(BeanRegistry.getBeanByName("testClazz")).isEmpty();
     }
@@ -62,7 +62,7 @@ class BeanRegistryTest {
     @Test
     void registerBeanAndFindBeanByType() {
         var testClass = new TestClass();
-        BeanRegistry.registerBean("testClass", testClass);
+        BeanRegistry.registerBean("testClass", testClass, testClass.getClass());
 
         var result = BeanRegistry.findBeanByType(TestClass.class);
         assertThat(result).isPresent().contains(testClass);
@@ -71,7 +71,7 @@ class BeanRegistryTest {
     @Test
     void containsBeanOfType() {
         var testClass = new TestClass();
-        BeanRegistry.registerBean("testClass", testClass);
+        BeanRegistry.registerBean("testClass", testClass, testClass.getClass());
 
         assertThat(BeanRegistry.containsBeanOfType(TestClass.class)).isTrue();
         assertThat(BeanRegistry.containsBeanOfType(String.class)).isFalse();

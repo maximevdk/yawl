@@ -2,8 +2,6 @@ package com.yawl;
 
 import com.sun.management.OperatingSystemMXBean;
 import com.yawl.annotations.EventListener;
-import com.yawl.beans.ApplicationContext;
-import com.yawl.beans.CommonBeans;
 import com.yawl.beans.HealthRegistry;
 import com.yawl.events.ApplicationEvent;
 import com.yawl.http.model.ContentType;
@@ -29,23 +27,29 @@ import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 
 public class ManagementServlet extends HttpServlet {
-    private final LongFunction<Long> TO_MB_FN = in -> in / (1024 * 1024);
-    private final DoubleFunction<Double> TO_PERCENT_FN = in -> in * 100;
-    private final ApplicationContext applicationContext;
+    private static final LongFunction<Long> TO_MB_FN = in -> in / (1024 * 1024);
+    private static final DoubleFunction<Double> TO_PERCENT_FN = in -> in * 100;
+
     private final ApplicationProperties.Application properties;
     private final JsonMapper mapper;
     private final List<RegisteredRoute> routes;
+    private final Map<String, Class<?>> beans;
 
-    public ManagementServlet(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
-        this.mapper = applicationContext.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME, JsonMapper.class);
-        this.properties = applicationContext.getBeanByNameOrThrow(CommonBeans.APPLICATION_PROPERTIES_NAME, ApplicationProperties.Application.class);
+    public ManagementServlet(ApplicationProperties.Application properties, JsonMapper mapper) {
+        this.mapper = mapper;
+        this.properties = properties;
         this.routes = new ArrayList<>();
+        this.beans = new HashMap<>();
     }
 
     @EventListener
     public void on(ApplicationEvent.RouteRegistryInitialized event) {
         routes.addAll(event.routes());
+    }
+
+    @EventListener
+    public void on(ApplicationEvent.ApplicationContextRefreshed event) {
+        beans.putAll(event.applicationContext().beansByName());
     }
 
     @Override
@@ -78,7 +82,6 @@ public class ManagementServlet extends HttpServlet {
     }
 
     private Debug getDebugInformation() {
-        var beans = new HashMap<>(applicationContext.beans());
         var routesMap = routes.stream().collect(Collectors.toMap(RegisteredRoute::route, registeredRoute -> registeredRoute.method().getDeclaringClass()));
         return new Debug(beans, routesMap);
     }
