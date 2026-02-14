@@ -17,4 +17,8 @@ public class PingService {
     public Pong set(String name) {
         return repository.setPing(name);
     }
+
+    public void delete(String id) {
+        repository.delete(id);
+    }
 }

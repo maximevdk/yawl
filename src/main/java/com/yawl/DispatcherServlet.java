@@ -66,7 +66,7 @@ public class DispatcherServlet extends HttpServlet {
             if (result != null) {
                 return HttpResponse.ok(result, destination.responseInfo().status());
             } else if (method.getReturnType() == void.class) {
-                return HttpResponse.ok(destination.responseInfo().status());
+                return HttpResponse.noContent(destination.responseInfo().status());
             } else {
                 return HttpResponse.notFound("Entity not found");
             }
@@ -95,10 +95,16 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     private void writeResponse(ResponseInfo info, HttpResponse response, HttpServletResponse resp) throws IOException {
-        var body = jsonMapper.writeValueAsBytes(response);
+        resp.setStatus(response.status().getCode());
+
+        if (response instanceof HttpResponse.NoContent) {
+            return;
+        }
+
         resp.setCharacterEncoding(StandardCharsets.UTF_8);
         resp.setContentType(info.contentType().value());
-        resp.setStatus(response.status().getCode());
+
+        var body = jsonMapper.writeValueAsBytes(response);
         resp.setContentLength(body.length);
         resp.getOutputStream().write(body);
     }

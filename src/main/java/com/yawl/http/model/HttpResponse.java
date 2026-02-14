@@ -3,7 +3,7 @@ package com.yawl.http.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public sealed interface HttpResponse permits HttpResponse.ErrorResponse, HttpResponse.Ok {
+public sealed interface HttpResponse permits HttpResponse.ErrorResponse, HttpResponse.NoContent, HttpResponse.Ok {
     @JsonProperty
     HttpStatus status();
 
@@ -37,12 +37,15 @@ public sealed interface HttpResponse permits HttpResponse.ErrorResponse, HttpRes
     record Ok<T>(@JsonValue T body, HttpStatus status) implements HttpResponse {
     }
 
+    record NoContent(HttpStatus status) implements HttpResponse {
+    }
+
     static <T> HttpResponse ok(T body, HttpStatus status) {
         return new Ok<>(body, status);
     }
 
-    static Ok<Void> ok(HttpStatus status) {
-        return new Ok<>(null, status);
+    static NoContent noContent(HttpStatus status) {
+        return new NoContent(status);
     }
 
     static ErrorResponse.NotFound notFound(String description) {

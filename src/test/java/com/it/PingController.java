@@ -1,5 +1,6 @@
 package com.it;
 
+import com.yawl.annotations.DeleteMapping;
 import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.PathParam;
 import com.yawl.annotations.PostMapping;
@@ -29,5 +30,10 @@ public class PingController {
     @PostMapping(status = HttpStatus.ACCEPTED)
     public Pong setPing(@QueryParam(name = "name") String name) {
         return pingService.set(name);
+    }
+
+    @DeleteMapping(path = "{id}", status = HttpStatus.NO_CONTENT)
+    public void deletePing(@PathParam(name = "id") String id) {
+        pingService.delete(id);
     }
 }
