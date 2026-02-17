@@ -1,0 +1,16 @@
+application:
+  name: yawl application
+  config:
+    location: application.yml
+  web:
+    enabled: true
+    config:
+      port: 8080
+      context-path: /
+      virtual-threads:
+        enabled: false
+        name: virtual-thread-
+  management:
+    endpoint:
+      enabled: false
+      path: /health

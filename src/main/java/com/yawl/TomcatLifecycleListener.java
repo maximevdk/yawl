@@ -18,7 +18,7 @@ public class TomcatLifecycleListener implements LifecycleListener {
 
     @Override
     public void lifecycleEvent(LifecycleEvent event) {
-        log.trace("Received event {} lifecycle {}", event.getType(), event.getLifecycle());
+        log.warn("Received event {} lifecycle {}", event.getType(), event.getLifecycle());
 
         switch (event.getType()) {
             case Lifecycle.BEFORE_INIT_EVENT -> HealthRegistry.systemStarting();

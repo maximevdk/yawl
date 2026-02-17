@@ -1,5 +1,6 @@
 package com.yawl.util;
 
+import com.yawl.annotations.ExtendedBy;
 import com.yawl.exception.NotInitializedException;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
@@ -11,9 +12,11 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class ReflectionUtil {
     private static final Logger log = LoggerFactory.getLogger(ReflectionUtil.class);
@@ -27,7 +30,16 @@ public final class ReflectionUtil {
             throw new NotInitializedException("Call ReflectionUtil.init() before using this method");
         }
 
-        return reflections.getTypesAnnotatedWith(annotationClass);
+        var annotations = new ArrayList<Class<? extends Annotation>>(List.of(annotationClass));
+
+        if (annotationClass.isAnnotationPresent(ExtendedBy.class)) {
+            annotations.addAll(List.of(annotationClass.getAnnotation(ExtendedBy.class).value()));
+        }
+
+        return annotations.stream()
+                .map(reflections::getTypesAnnotatedWith)
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
     }
 
     public static <T> Optional<T> invoke(Method method, Object instance, List<?> arguments) {
