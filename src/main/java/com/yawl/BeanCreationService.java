@@ -4,15 +4,14 @@ import com.yawl.annotations.Bean;
 import com.yawl.annotations.Configuration;
 import com.yawl.annotations.EnableHttpClients;
 import com.yawl.annotations.HttpClient;
-import com.yawl.annotations.Repository;
-import com.yawl.annotations.Service;
-import com.yawl.annotations.WebController;
+import com.yawl.annotations.TypedBean;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
-import com.yawl.events.EventRegistry;
+import com.yawl.events.EventListenerRegistrar;
 import com.yawl.exception.UnableToInitializeBeanException;
 import com.yawl.http.client.ApacheHttpExecutor;
 import com.yawl.http.client.HttpClientInvocationHandler;
+import com.yawl.http.client.HttpExecutor;
 import com.yawl.util.BeanUtil;
 import com.yawl.util.ConstructorUtil;
 import com.yawl.util.ReflectionUtil;
@@ -28,29 +27,47 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.collectingAndThen;
 
 public class BeanCreationService {
     private static final Logger log = LoggerFactory.getLogger(BeanCreationService.class);
     private final Map<Class<?>, BeanWrapper<?>> wrapperCache = new HashMap<>();
     private final ApplicationContext applicationContext;
-    private final EventRegistry eventRegistry;
+    private final EventListenerRegistrar eventRegistry;
 
-    public BeanCreationService(ApplicationContext applicationContext, EventRegistry eventRegistry) {
+    public BeanCreationService(ApplicationContext applicationContext, EventListenerRegistrar eventRegistry) {
         this.applicationContext = applicationContext;
         this.eventRegistry = eventRegistry;
     }
 
     public void findAndRegisterBeans() {
-        ReflectionUtil.getClassesAnnotatedWith(EnableHttpClients.class).forEach(this::createHttpClients);
+        ReflectionUtil.getClassesAnnotatedWith(EnableHttpClients.class).stream()
+                .map(clazz -> clazz.getAnnotation(EnableHttpClients.class))
+                .flatMap(enableHttpClients -> Arrays.stream(enableHttpClients.value()))
+                .filter(client -> client.isAnnotationPresent(HttpClient.class))
+                .collect(collectingAndThen(Collectors.toSet(), this::createHttpClients));
 
         //TODO: fix: even though more dynamic, Configuration annotated classes need to be defined first...
         var beans = new HashSet<BeanWrapper<?>>();
         ReflectionUtil.getClassesAnnotatedWith(Configuration.class).stream().flatMap(this::createWrappersWithSupplier).forEach(beans::add);
-        ReflectionUtil.getClassesAnnotatedWith(Service.class).stream().map(this::createWrapper).forEach(beans::add);
-        ReflectionUtil.getClassesAnnotatedWith(Repository.class).stream().map(this::createWrapper).forEach(beans::add);
-        ReflectionUtil.getClassesAnnotatedWith(WebController.class).stream().map(this::createWrapper).forEach(beans::add);
+        ReflectionUtil.getClassesAnnotatedWith(TypedBean.class).stream().map(this::createWrapper).forEach(beans::add);
+        beans.forEach(this::initializeBean);
+    }
+
+    public void findAndRegisterBeans(Set<Class<?>> includes) {
+        includes.stream()
+                .filter(include -> include.isAnnotationPresent(HttpClient.class))
+                .collect(collectingAndThen(Collectors.toSet(), this::createHttpClients));
+
+        //TODO: fix: this is a bit of duplicated code from findAndRegisterBeans() so should be cleaned up
+        var beans = new HashSet<BeanWrapper<?>>();
+        includes.stream().filter(include -> include.isAnnotationPresent(Configuration.class)).flatMap(this::createWrappersWithSupplier).forEach(beans::add);
+        includes.stream().filter(include -> !include.isAnnotationPresent(Configuration.class)).map(this::createWrapper).forEach(beans::add);
 
         beans.forEach(this::initializeBean);
     }
@@ -105,13 +122,12 @@ public class BeanCreationService {
     /**
      * Creates a proxy class for each HttpClient configured by {@code com.yawl.annotations.EnableHttpClients}
      *
-     * @param enableHttpConfigClass a class annotated with {@code com.yawl.annotations.EnableHttpClients}
+     * @param enabledHttpClients a set of classes annotated with {@code com.yawl.annotations.HttpClient}
      */
-    private void createHttpClients(Class<?> enableHttpConfigClass) {
-        var httpClients = enableHttpConfigClass.getAnnotation(EnableHttpClients.class);
+    private HttpExecutor createHttpClients(Set<Class<?>> enabledHttpClients) {
         var httpExecutor = new ApacheHttpExecutor(applicationContext.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME));
 
-        for (Class<?> httpClientClass : httpClients.classes()) {
+        for (Class<?> httpClientClass : enabledHttpClients) {
             var httpClient = httpClientClass.getAnnotation(HttpClient.class);
 
             var proxy = Proxy.newProxyInstance(
@@ -122,6 +138,8 @@ public class BeanCreationService {
 
             applicationContext.register(httpClient.name(), proxy, httpClientClass);
         }
+
+        return httpExecutor;
     }
 
     private void initializeBean(BeanWrapper<?> bean) {

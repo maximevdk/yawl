@@ -1,13 +1,13 @@
 package com.yawl.annotations;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+@Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@TypedBean
-public @interface WebController {
-    public String path() default "/";
+public @interface ExtendedBy {
+    Class<? extends Annotation>[] value() default {};
 }

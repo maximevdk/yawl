@@ -40,4 +40,8 @@ public class ApplicationContext {
     public Map<String, Class<?>> beansByName() {
         return BeanRegistry.getBeansByName();
     }
+
+    public void clear() {
+        BeanRegistry.clear();
+    }
 }

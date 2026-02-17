@@ -6,6 +6,7 @@ import com.yawl.events.ApplicationEvent;
 import com.yawl.events.EventPublisher;
 import com.yawl.events.EventRegistry;
 import com.yawl.util.ReflectionUtil;
+import org.apache.catalina.startup.Tomcat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.dataformat.yaml.YAMLMapper;
@@ -47,8 +48,9 @@ public class YawlApplication {
 
             var tomcat = new TomcatWebServer(ctx).start();
             registry.publish(new ApplicationEvent.ApplicationContextRefreshed(ctx));
-            //this looks like it should be the last command, other commands are not getting executed before shutdown is called
-            tomcat.getServer().await();
+            //start tomcat in a non daemon thread this results in the application not
+            // blocking on this line but advancing to the next line, returning the context
+            startNonDaemonAwaitThread(tomcat, baseClass);
         }
 
         return ctx;
@@ -64,5 +66,14 @@ public class YawlApplication {
 
         var initializer = new ApplicationPropertiesInitializer(yamlMapper);
         return initializer.init(defaultConfigLocation);
+    }
+
+    private static void startNonDaemonAwaitThread(Tomcat tomcat, Class<?> baseClass) {
+        var awaitThread = new Thread(() -> {
+            tomcat.getServer().await();
+        });
+        awaitThread.setContextClassLoader(baseClass.getClassLoader());
+        awaitThread.setDaemon(false);  // non-daemon keeps JVM alive
+        awaitThread.start();
     }
 }

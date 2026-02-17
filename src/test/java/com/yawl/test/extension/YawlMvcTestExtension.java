@@ -1,9 +1,9 @@
 package com.yawl.test.extension;
 
-import com.yawl.YawlApplication;
 import com.yawl.annotations.Autowired;
 import com.yawl.beans.ApplicationContext;
-import com.yawl.test.annotation.YawlTest;
+import com.yawl.test.annotation.YawlMvcTest;
+import com.yawl.test.beans.TestContext;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -13,15 +13,22 @@ import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 
-public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, TestInstancePostProcessor, AfterAllCallback {
+public class YawlMvcTestExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, TestInstancePostProcessor, AfterAllCallback {
     private static final String APPLICATION_CTX_KEY = "ctx";
-    private static final String DEFAULT_CONFIG_LOCATION = "--config.location=defaults-yawl-test.yml";
+    private static final String DEFAULT_CONFIG_LOCATION = "defaults-yawl-mvc-test.yml";
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
         if (contextNotInitialized(context)) {
-            var ctx = YawlApplication.run(context.getRequiredTestClass(), DEFAULT_CONFIG_LOCATION);
+            var yawlMvcTest = context.getRequiredTestClass().getAnnotation(YawlMvcTest.class);
+            var includes = new HashSet<Class<?>>(1);
+            includes.add(yawlMvcTest.controller());
+            includes.addAll(List.of(yawlMvcTest.imports()));
+
+            var ctx = new TestContext().buildTestContext(includes, DEFAULT_CONFIG_LOCATION);
             context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
         }
     }
@@ -36,17 +43,25 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
 
     @Override
     public void afterEach(ExtensionContext context) throws Exception {
-        var config = context.getRequiredTestClass().getAnnotation(YawlTest.class);
+        var config = context.getRequiredTestClass().getAnnotation(YawlMvcTest.class);
 
         if (config.dirtiesContext()) {
-            context.getStore(ExtensionContext.Namespace.GLOBAL).remove(APPLICATION_CTX_KEY, ApplicationContext.class);
+            var ctx = context.getStore(ExtensionContext.Namespace.GLOBAL).remove(APPLICATION_CTX_KEY, ApplicationContext.class);
+            if (ctx != null) {
+                ctx.clear();
+            }
         }
     }
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         if (contextNotInitialized(context)) {
-            var ctx = YawlApplication.run(context.getRequiredTestClass(), DEFAULT_CONFIG_LOCATION);
+            var yawlMvcTest = context.getRequiredTestClass().getAnnotation(YawlMvcTest.class);
+            var includes = new HashSet<Class<?>>(1);
+            includes.add(yawlMvcTest.controller());
+            includes.addAll(List.of(yawlMvcTest.imports()));
+
+            var ctx = new TestContext().buildTestContext(includes, DEFAULT_CONFIG_LOCATION);
             context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
         }
     }

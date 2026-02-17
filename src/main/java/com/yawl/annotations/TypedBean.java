@@ -5,9 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+@Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@TypedBean
-public @interface WebController {
-    public String path() default "/";
+@ExtendedBy({Repository.class, Service.class, WebController.class})
+public @interface TypedBean {
 }

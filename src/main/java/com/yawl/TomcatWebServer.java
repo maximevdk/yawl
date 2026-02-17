@@ -17,13 +17,13 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Set;
 
-class TomcatWebServer {
+public final class TomcatWebServer {
     private static final Logger log = LoggerFactory.getLogger(TomcatWebServer.class);
     private static final String TOMCAT_DIRECTORY = "./target/temp";
 
     private final ApplicationContext applicationContext;
 
-    TomcatWebServer(ApplicationContext applicationContext) {
+    public TomcatWebServer(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 
