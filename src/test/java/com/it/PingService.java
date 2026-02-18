@@ -18,6 +18,10 @@ public class PingService {
         return repository.setPing(name);
     }
 
+    public void update(String id, String name) {
+        repository.updatePing(id, name);
+    }
+
     public void delete(String id) {
         repository.delete(id);
     }

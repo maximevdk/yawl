@@ -5,6 +5,7 @@ import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.HttpClient;
 import com.yawl.annotations.PathParam;
 import com.yawl.annotations.PostMapping;
+import com.yawl.annotations.PutMapping;
 import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.RequestBody;
 import com.yawl.annotations.RequestHeader;
@@ -77,6 +78,7 @@ public record HttpClientInvocationHandler(HttpExecutor executor) implements Invo
     private static final List<MappingDescriptor<?>> MAPPINGS = List.of(
             new MappingDescriptor<>(GetMapping.class, GetMapping::path, HttpMethod.GET),
             new MappingDescriptor<>(PostMapping.class, PostMapping::path, HttpMethod.POST),
+            new MappingDescriptor<>(PutMapping.class, PutMapping::path, HttpMethod.PUT),
             new MappingDescriptor<>(DeleteMapping.class, DeleteMapping::path, HttpMethod.DELETE)
     );
 

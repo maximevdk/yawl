@@ -5,6 +5,7 @@ import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.HttpClient;
 import com.yawl.annotations.PathParam;
 import com.yawl.annotations.PostMapping;
+import com.yawl.annotations.PutMapping;
 import com.yawl.annotations.QueryParam;
 
 @HttpClient(name = "restClient", url = "http://localhost:8080")
@@ -17,6 +18,9 @@ public interface RestClient {
 
     @PostMapping(path = "/ping")
     Pong post(@QueryParam(name = "name") String name);
+
+    @PutMapping(path = "/ping/{id}")
+    void put(@PathParam(name = "id") String id, @QueryParam(name = "name") String name);
 
     @DeleteMapping(path = "/ping/{id}")
     void delete(@PathParam(name = "id") String id);
