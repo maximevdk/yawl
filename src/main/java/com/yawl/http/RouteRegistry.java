@@ -3,6 +3,7 @@ package com.yawl.http;
 import com.yawl.annotations.DeleteMapping;
 import com.yawl.annotations.GetMapping;
 import com.yawl.annotations.PostMapping;
+import com.yawl.annotations.PutMapping;
 import com.yawl.annotations.WebController;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.exception.DuplicateRouteException;
@@ -44,6 +45,11 @@ public class RouteRegistry {
                     var postMapping = method.getAnnotation(PostMapping.class);
                     var route = Route.post(webController.path(), postMapping.path());
                     var responseInfo = new ResponseInfo(ContentType.of(postMapping.produces()), postMapping.status());
+                    registerRoute(route, method, responseInfo);
+                } else if (method.isAnnotationPresent(PutMapping.class)) {
+                    var putMapping = method.getAnnotation(PutMapping.class);
+                    var route = Route.put(webController.path(), putMapping.path());
+                    var responseInfo = new ResponseInfo(ContentType.of(putMapping.produces()), putMapping.status());
                     registerRoute(route, method, responseInfo);
                 } else if (method.isAnnotationPresent(DeleteMapping.class)) {
                     var deleteMapping = method.getAnnotation(DeleteMapping.class);

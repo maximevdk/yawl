@@ -20,6 +20,8 @@ public class PingControllerIT {
     void getPong_path() {
         var pong = repository.setPing("test");
         var result = restClient.getByPath(pong.id());
+
+        assertNotNull(result);
         assertEquals(pong, result);
     }
 
@@ -27,6 +29,8 @@ public class PingControllerIT {
     void getPong_query() {
         var pong = repository.setPing("test");
         var result = restClient.getByQuery(pong.id());
+
+        assertNotNull(result);
         assertEquals(pong, result);
     }
 
@@ -35,6 +39,7 @@ public class PingControllerIT {
         var pong = repository.setPing("test");
 
         assertNotNull(repository.getPing(pong.id()));
+
         restClient.delete(pong.id());
         assertNull(repository.getPing(pong.id()));
     }
@@ -46,5 +51,14 @@ public class PingControllerIT {
         assertNotNull(pong.id());
         assertEquals("test", pong.message());
         assertEquals(pong, repository.getPing(pong.id()));
+    }
+
+    @Test
+    void put() {
+        var pong = repository.setPing("test");
+
+        restClient.put(pong.id(), "updated value");
+
+        assertEquals(new Pong(pong.id(), "updated value"), repository.getPing(pong.id()));
     }
 }

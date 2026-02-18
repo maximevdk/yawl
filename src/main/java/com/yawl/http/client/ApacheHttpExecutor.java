@@ -1,8 +1,10 @@
 package com.yawl.http.client;
 
+import com.yawl.exception.HttpClientServerException;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -42,6 +44,7 @@ public class ApacheHttpExecutor implements HttpExecutor {
             var http = switch (request.method()) {
                 case GET -> new HttpGet(request.uri());
                 case POST -> new HttpPost(request.uri());
+                case PUT -> new HttpPut(request.uri());
                 case DELETE -> new HttpDelete(request.uri());
             };
 
@@ -84,6 +87,10 @@ public class ApacheHttpExecutor implements HttpExecutor {
         }
 
         if (is2xxSuccessful(response.getCode())) {
+            if (returnType == Void.class || returnType == void.class) {
+                return null;
+            }
+
             try {
                 return jsonMapper.readValue(response.getEntity().getContent(), jsonMapper.constructType(returnType));
             } catch (IOException ex) {
@@ -91,7 +98,7 @@ public class ApacheHttpExecutor implements HttpExecutor {
                 throw new RuntimeException("Failed to get content", ex);
             }
         } else {
-            throw new RuntimeException("Request failed with status code %s and reason %s".formatted(response.getCode(), response.getReasonPhrase()));
+            throw new HttpClientServerException(response.getCode(), response.getReasonPhrase());
         }
     }
 
