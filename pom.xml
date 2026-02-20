@@ -16,7 +16,7 @@
         <jackson.version>3.0.3</jackson.version>
         <log4j.version>2.25.3</log4j.version>
         <logback.version>1.5.17</logback.version>
-        <tomcat.version>11.0.12</tomcat.version>
+        <tomcat.version>11.0.14</tomcat.version>
         <reflections.version>0.10.2</reflections.version>
         <httpclient.version>5.6</httpclient.version>
 
