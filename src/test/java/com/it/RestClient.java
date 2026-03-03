@@ -8,6 +8,8 @@ import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.PutMapping;
 import com.yawl.annotations.QueryParam;
 
+import java.util.List;
+
 @HttpClient(name = "restClient", url = "http://localhost:8080")
 public interface RestClient {
     @GetMapping(path = "/ping/{id}")
@@ -15,6 +17,12 @@ public interface RestClient {
 
     @GetMapping(path = "/ping")
     Pong getByQuery(@QueryParam(name = "id") String id);
+
+    @GetMapping(path = "/ping/by-ids")
+    List<Pong> getByIds(@QueryParam(name = "ids") List<String> ids);
+
+    @GetMapping(path = "/ping/by-ids")
+    List<Pong> getByIds(@QueryParam(name = "ids") String ids);
 
     @PostMapping(path = "/ping")
     Pong post(@QueryParam(name = "name") String name);

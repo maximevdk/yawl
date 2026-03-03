@@ -22,8 +22,9 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Parameter;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Optional;
 
 public class DispatcherServlet extends HttpServlet {
@@ -77,21 +78,22 @@ public class DispatcherServlet extends HttpServlet {
 
     private Object[] getParameterValues(HttpServletRequest req, RegisteredRoute destination) {
         var pathParams = destination.route().extractVariables(req.getRequestURI());
-        return Arrays.stream(destination.method().getParameters())
-                .map(parameter -> {
-                    if (parameter.isAnnotationPresent(QueryParam.class)) {
-                        var queryParam = parameter.getAnnotation(QueryParam.class);
-                        var name = queryParam.name() != null ? queryParam.name() : parameter.getName();
-                        return StringUtils.parse(req.getParameter(name), parameter.getType());
-                    } else if (parameter.isAnnotationPresent(PathParam.class)) {
-                        var pathParam = parameter.getAnnotation(PathParam.class);
-                        return Optional.ofNullable(pathParams.get(pathParam.name()))
-                                .orElseThrow(() -> MissingPathParameterException.forPath(destination.route(), pathParam.name()));
-                    } else {
-                        throw MissingRequiredParameterException.of(parameter.getName());
-                    }
-                })
-                .toArray();
+        var parameters = new ArrayList<>();
+        for (Parameter parameter : destination.method().getParameters()) {
+            if (parameter.isAnnotationPresent(QueryParam.class)) {
+                var queryParam = parameter.getAnnotation(QueryParam.class);
+                var name = queryParam.name() != null ? queryParam.name() : parameter.getName();
+                parameters.add(StringUtils.parse(req.getParameterValues(name), parameter.getParameterizedType()));
+            } else if (parameter.isAnnotationPresent(PathParam.class)) {
+                var pathParam = parameter.getAnnotation(PathParam.class);
+                Optional.ofNullable(pathParams.get(pathParam.name()))
+                        .ifPresentOrElse(parameters::add, () -> MissingPathParameterException.forPath(destination.route(), pathParam.name()));
+            } else {
+                throw MissingRequiredParameterException.of(parameter.getName());
+            }
+        }
+
+        return parameters.toArray();
     }
 
     private void writeResponse(ResponseInfo info, HttpResponse response, HttpServletResponse resp) throws IOException {

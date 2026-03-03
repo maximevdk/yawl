@@ -9,6 +9,8 @@ import com.yawl.annotations.QueryParam;
 import com.yawl.annotations.WebController;
 import com.yawl.http.model.HttpStatus;
 
+import java.util.List;
+
 @WebController(path = "ping")
 public class PingController {
 
@@ -21,6 +23,11 @@ public class PingController {
     @GetMapping(path = "/{id}")
     public Pong ping(@PathParam(name = "id") String id) {
         return pingService.get(id);
+    }
+
+    @GetMapping(path = "/by-ids")
+    public List<Pong> pingsByIds(@QueryParam(name = "ids") List<String> ids) {
+        return pingService.find(ids);
     }
 
     @GetMapping

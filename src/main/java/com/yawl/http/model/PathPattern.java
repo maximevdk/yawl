@@ -82,6 +82,11 @@ public record PathPattern(List<PathSegment> segments) {
                 .toList();
     }
 
+    public int literalCount() {
+        return (int) segments.stream()
+                .filter(segment -> segment instanceof PathSegment.Literal)
+                .count();
+    }
 
     /**
      * Splits the path by "/" in segments.

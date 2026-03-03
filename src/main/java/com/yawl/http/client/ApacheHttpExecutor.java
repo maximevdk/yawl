@@ -1,6 +1,7 @@
 package com.yawl.http.client;
 
 import com.yawl.exception.HttpClientServerException;
+import com.yawl.util.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
@@ -10,7 +11,9 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.net.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +22,8 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.List;
 
 public class ApacheHttpExecutor implements HttpExecutor {
     private static final Logger log = LoggerFactory.getLogger(ApacheHttpExecutor.class);
@@ -50,8 +55,8 @@ public class ApacheHttpExecutor implements HttpExecutor {
 
             var uri = new URIBuilder(request.uri());
             request.headers().forEach(http::addHeader);
-            request.params().stream().filter(Parameter::isPathParam).forEach(parameter -> updatePathParam(uri, parameter));
-            request.params().stream().filter(Parameter::isQueryParam).forEach(parameter -> uri.addParameter(parameter.name(), parameter.valueAsString()));
+            request.pathParameters().forEach(parameter -> updatePathParam(uri, parameter));
+            request.queryParameters().map(this::mapToNameValuePairs).flatMap(List::stream).forEach(uri::addParameter);
 
             // Body (if applicable)
             if (request.body() != null) {
@@ -64,6 +69,16 @@ public class ApacheHttpExecutor implements HttpExecutor {
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private List<? extends NameValuePair> mapToNameValuePairs(Parameter parameter) {
+        if (Collection.class.isAssignableFrom(parameter.value().getClass())) {
+            return ((Collection<?>) parameter.value()).stream()
+                    .map(value -> new BasicNameValuePair(parameter.name(), StringUtils.toString(value)))
+                    .toList();
+        }
+
+        return List.of(new BasicNameValuePair(parameter.name(), parameter.valueAsString()));
     }
 
     private void updatePathParam(URIBuilder uri, Parameter parameter) {

@@ -2,6 +2,8 @@ package com.it;
 
 import com.yawl.annotations.Service;
 
+import java.util.List;
+
 @Service
 public class PingService {
     private final PingRepository repository;
@@ -12,6 +14,12 @@ public class PingService {
 
     public Pong get(String id) {
         return repository.getPing(id);
+    }
+
+    public List<Pong> find(List<String> ids) {
+        return ids.stream()
+                .map(repository::getPing)
+                .toList();
     }
 
     public Pong set(String name) {
