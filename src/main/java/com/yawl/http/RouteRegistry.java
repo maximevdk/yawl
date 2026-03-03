@@ -69,7 +69,7 @@ public class RouteRegistry {
         return destinations.entrySet()
                 .stream()
                 .filter(entry -> entry.getKey().matches(httpMethod, path))
-                .findFirst()
+                .max(Map.Entry.comparingByKey())
                 .map(Map.Entry::getValue);
     }
 

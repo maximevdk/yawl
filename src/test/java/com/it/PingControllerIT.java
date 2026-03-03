@@ -4,7 +4,10 @@ import com.yawl.annotations.Autowired;
 import com.yawl.test.annotation.YawlMvcTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -32,6 +35,30 @@ public class PingControllerIT {
 
         assertNotNull(result);
         assertEquals(pong, result);
+    }
+
+    @Test
+    void getPongs_byIds_asList() {
+        var pong1 = repository.setPing("test1");
+        var pong2 = repository.setPing("test2");
+        var pong3 = repository.setPing("test3");
+
+        var result = restClient.getByIds(List.of(pong1.id(), pong2.id(), pong3.id()));
+
+        assertFalse(result.isEmpty());
+        assertEquals(3, result.size());
+    }
+
+    @Test
+    void getPongs_byIds_asString() {
+        var pong1 = repository.setPing("test1");
+        var pong2 = repository.setPing("test2");
+        var pong3 = repository.setPing("test3");
+
+        var result = restClient.getByIds(String.join(",", pong1.id(), pong2.id(), pong3.id()));
+
+        assertFalse(result.isEmpty());
+        assertEquals(3, result.size());
     }
 
     @Test

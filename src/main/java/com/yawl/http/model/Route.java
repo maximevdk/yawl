@@ -4,7 +4,7 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 
-public record Route(@Nonnull HttpMethod method, @Nonnull PathPattern pattern) {
+public record Route(@Nonnull HttpMethod method, @Nonnull PathPattern pattern) implements Comparable<Route> {
     public static Route of(HttpMethod method, String... paths) {
         var path = String.join("/", paths);
         return new Route(method, PathPattern.parse(path));
@@ -45,5 +45,10 @@ public record Route(@Nonnull HttpMethod method, @Nonnull PathPattern pattern) {
      */
     public boolean matches(HttpMethod method, String requestPath) {
         return this.method == method && pattern.matches(requestPath);
+    }
+
+    @Override
+    public int compareTo(Route o) {
+        return pattern.literalCount() - o.pattern().literalCount();
     }
 }

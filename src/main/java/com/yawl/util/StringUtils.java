@@ -1,7 +1,14 @@
 package com.yawl.util;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public final class StringUtils {
     private static final Map<Class<?>, Function<String, ?>> STRING_PARSER_FN = Map.of(
@@ -28,7 +35,33 @@ public final class StringUtils {
     }
 
 
-    public static <T> T parse(String value, Class<T> clazz) {
+    public static <T> T parse(String[] values, Type type) {
+        if (type instanceof ParameterizedType parameterizedType) {
+            var elementType = (Class<T>) parameterizedType.getActualTypeArguments()[0];
+            if (parameterizedType.getRawType() == List.class) {
+                return (T) Arrays.stream(values)
+                        .map(value -> value.split(","))
+                        .flatMap(Arrays::stream)
+                        .map(value -> parse(value, elementType))
+                        .toList();
+            } else if (parameterizedType.getRawType() == Set.class) {
+                return (T) Arrays.stream(values)
+                        .map(value -> value.split(","))
+                        .flatMap(Arrays::stream)
+                        .map(value -> parse(value, elementType))
+                        .collect(Collectors.toUnmodifiableSet());
+            }
+        }
+
+        return parse(String.join(",", values), (Class<T>) type);
+    }
+
+
+    private static <T> T parse(String value, Class<T> clazz) {
+        if (value == null) {
+            return null;
+        }
+
         if (clazz == String.class) {
             return (T) value;
         }
@@ -42,11 +75,19 @@ public final class StringUtils {
         return (T) fn.apply(value);
     }
 
-    public static boolean isString(Object object) {
+    public static String toString(Object object) {
         if (object == null) {
-            return false;
+            return null;
         }
 
-        return object instanceof String;
+        if (object instanceof String str) {
+            return str;
+        }
+
+        if (object instanceof Collection<?> collection) {
+            return collection.stream().map(StringUtils::toString).collect(Collectors.joining(","));
+        }
+
+        return object.toString();
     }
 }

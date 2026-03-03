@@ -1,5 +1,7 @@
 package com.yawl.http.client;
 
+import com.yawl.util.StringUtils;
+
 record Parameter(String name, Object value, In in) {
 
     public static Parameter path(String name, Object value) {
@@ -11,11 +13,7 @@ record Parameter(String name, Object value, In in) {
     }
 
     public String valueAsString() {
-        if (value instanceof String str) {
-            return str;
-        }
-
-        return String.valueOf(value);
+        return StringUtils.toString(value);
     }
 
     public boolean isPathParam() {
