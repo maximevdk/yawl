@@ -72,6 +72,10 @@ public class ApacheHttpExecutor implements HttpExecutor {
     }
 
     private List<? extends NameValuePair> mapToNameValuePairs(Parameter parameter) {
+        if (parameter.value() == null) {
+            return List.of(new BasicNameValuePair(parameter.name(), null));
+        }
+
         if (Collection.class.isAssignableFrom(parameter.value().getClass())) {
             return ((Collection<?>) parameter.value()).stream()
                     .map(value -> new BasicNameValuePair(parameter.name(), StringUtils.toString(value)))

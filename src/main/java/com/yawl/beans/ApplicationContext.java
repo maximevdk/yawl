@@ -18,6 +18,10 @@ public class ApplicationContext {
         return BeanRegistry.findBeanByTypeOrThrow(clazz);
     }
 
+    public <T> List<T> findBeansByType(Class<T> clazz) {
+        return BeanRegistry.findBeansByType(clazz);
+    }
+
     public boolean containsBeanOfType(Class<?> clazz) {
         return BeanRegistry.containsBeanOfType(clazz);
     }

@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -39,18 +40,26 @@ public final class StringUtils {
         if (type instanceof ParameterizedType parameterizedType) {
             var elementType = (Class<T>) parameterizedType.getActualTypeArguments()[0];
             if (parameterizedType.getRawType() == List.class) {
-                return (T) Arrays.stream(values)
+                return (T) Arrays.stream(Optional.ofNullable(values).orElse(new String[0]))
                         .map(value -> value.split(","))
                         .flatMap(Arrays::stream)
+                        .map(String::trim)
+                        .filter(StringUtils::hasText)
                         .map(value -> parse(value, elementType))
                         .toList();
             } else if (parameterizedType.getRawType() == Set.class) {
-                return (T) Arrays.stream(values)
+                return (T) Arrays.stream(Optional.ofNullable(values).orElse(new String[0]))
                         .map(value -> value.split(","))
                         .flatMap(Arrays::stream)
+                        .map(String::trim)
+                        .filter(StringUtils::hasText)
                         .map(value -> parse(value, elementType))
                         .collect(Collectors.toUnmodifiableSet());
             }
+        }
+
+        if (values == null) {
+            return null;
         }
 
         return parse(String.join(",", values), (Class<T>) type);

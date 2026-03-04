@@ -63,6 +63,10 @@ final class BeanRegistry {
         return (T) beansByType.getFirst();
     }
 
+    public static <T> List<T> findBeansByType(Class<T> clazz) {
+        return (List<T>) BEANS_BY_TYPE.getOrDefault(clazz,  List.of());
+    }
+
     public static <T> boolean containsBeanOfType(Class<T> clazz) {
         return !BEANS_BY_TYPE.getOrDefault(clazz, List.of()).isEmpty();
     }
