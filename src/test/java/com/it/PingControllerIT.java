@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @YawlMvcTest(controller = PingController.class, imports = {RestClient.class, ApplicationConfiguration.class})
 public class PingControllerIT {
@@ -59,6 +60,14 @@ public class PingControllerIT {
 
         assertFalse(result.isEmpty());
         assertEquals(3, result.size());
+    }
+
+    @Test
+    void getPongs_byIds_null() {
+        var result = restClient.getByIds((String) null);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
     @Test
