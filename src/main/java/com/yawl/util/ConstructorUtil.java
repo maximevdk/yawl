@@ -30,11 +30,11 @@ public final class ConstructorUtil {
     }
 
     public static List<Parameter> getRequiredConstructorParameters(Class<?> clazz) {
+        // Reverse order
         var constructor = Arrays.stream(clazz.getDeclaredConstructors())
                 .filter(c -> c.canAccess(null))
-                .max((c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount())) // Reverse order
+                .min((c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount()))
                 .orElseThrow(() -> NoAccessibleConstructorFoundException.forClass(clazz));
-
 
         log.trace("Found constructor with parameters {}", (Object) constructor.getParameterTypes());
         return List.of(constructor.getParameters());
