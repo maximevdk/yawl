@@ -24,6 +24,10 @@ public class PingRepository {
         return pong;
     }
 
+    public void setPing(Pong pong) {
+        pongDatabase.store(pong.id(), pong);
+    }
+
     public void updatePing(String id, String name) {
         Optional.ofNullable(getPing(id)).ifPresent(ping -> {
             pongDatabase.update(id, new Pong(id, name));

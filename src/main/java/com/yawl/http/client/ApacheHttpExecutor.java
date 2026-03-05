@@ -1,6 +1,7 @@
 package com.yawl.http.client;
 
 import com.yawl.exception.HttpClientServerException;
+import com.yawl.http.model.HttpStatus;
 import com.yawl.util.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -101,11 +102,13 @@ public class ApacheHttpExecutor implements HttpExecutor {
     }
 
     private <T> T handleResponse(ClassicHttpResponse response, Type returnType) {
-        if (isNotFoundOrNoContent(response.getCode())) {
+        var statusCode = HttpStatus.of(response.getCode());
+
+        if (isNotFoundOrNoContent(statusCode)) {
             return null;
         }
 
-        if (is2xxSuccessful(response.getCode())) {
+        if (statusCode.is2xxSuccessful()) {
             if (returnType == Void.class || returnType == void.class) {
                 return null;
             }
@@ -121,11 +124,7 @@ public class ApacheHttpExecutor implements HttpExecutor {
         }
     }
 
-    private boolean is2xxSuccessful(int status) {
-        return status == 200 || status == 202;
-    }
-
-    private boolean isNotFoundOrNoContent(int status) {
-        return status == 404 || status == 204;
+    private boolean isNotFoundOrNoContent(HttpStatus status) {
+        return status == HttpStatus.NOT_FOUND || status == HttpStatus.NO_CONTENT;
     }
 }

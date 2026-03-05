@@ -14,7 +14,7 @@ public final class ConstructorUtil {
     private static final Logger log = LoggerFactory.getLogger(ConstructorUtil.class);
 
     public static <T> Optional<T> newInstance(Class<T> clazz, Object... args) {
-        log.info("Finding suitable constructor for class {}", (Object) clazz.getDeclaredConstructors());
+        log.trace("Finding suitable constructor for class {}", (Object) clazz.getDeclaredConstructors());
         var constructor = Arrays.stream(clazz.getDeclaredConstructors())
                 .filter(c -> c.canAccess(null))
                 .filter(c -> c.getParameterCount() == args.length)
@@ -32,11 +32,11 @@ public final class ConstructorUtil {
     public static List<Parameter> getRequiredConstructorParameters(Class<?> clazz) {
         var constructor = Arrays.stream(clazz.getDeclaredConstructors())
                 .filter(c -> c.canAccess(null))
-                .sorted((c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount())) // Reverse order
-                .findFirst().orElseThrow(() -> NoAccessibleConstructorFoundException.forClass(clazz));
+                .max((c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount())) // Reverse order
+                .orElseThrow(() -> NoAccessibleConstructorFoundException.forClass(clazz));
 
 
-        log.info("Found constructor with parameters {}", constructor.getParameterTypes());
+        log.trace("Found constructor with parameters {}", (Object) constructor.getParameterTypes());
         return List.of(constructor.getParameters());
     }
 

@@ -5,25 +5,26 @@ import java.util.List;
 import java.util.Map;
 
 public class ApplicationContext {
+    private final BeanRegistry registry = new BeanRegistry();
 
     public <T> T getBeanByNameOrThrow(String name) {
-        return BeanRegistry.getBeanByNameOrThrow(name);
+        return registry.getBeanByNameOrThrow(name);
     }
 
     public <T> T getBeanByNameOrThrow(String name, Class<T> clazz) {
-        return BeanRegistry.getBeanByNameOrThrow(name, clazz);
+        return registry.getBeanByNameOrThrow(name, clazz);
     }
 
     public <T> T getBeanByTypeOrThrow(Class<T> clazz) {
-        return BeanRegistry.findBeanByTypeOrThrow(clazz);
+        return registry.findBeanByTypeOrThrow(clazz);
     }
 
     public <T> List<T> findBeansByType(Class<T> clazz) {
-        return BeanRegistry.findBeansByType(clazz);
+        return registry.findBeansByType(clazz);
     }
 
     public boolean containsBeanOfType(Class<?> clazz) {
-        return BeanRegistry.containsBeanOfType(clazz);
+        return registry.containsBeanOfType(clazz);
     }
 
     public void register(String name, Object bean) {
@@ -31,21 +32,21 @@ public class ApplicationContext {
     }
 
     public void register(String name, Object bean, Class<?> clazz) {
-        BeanRegistry.registerBean(name, bean, clazz);
+        registry.registerBean(name, bean, clazz);
     }
 
     public List<Class<?>> getBeansAnnotatedWith(Class<? extends Annotation> annotation) {
-        return BeanRegistry.streamBeans()
+        return registry.streamBeans()
                 .<Class<?>>map(Object::getClass)
                 .filter(clazz -> clazz.isAnnotationPresent(annotation))
                 .toList();
     }
 
     public Map<String, Class<?>> beansByName() {
-        return BeanRegistry.getBeansByName();
+        return registry.getBeansByName();
     }
 
     public void clear() {
-        BeanRegistry.clear();
+        registry.clear();
     }
 }
