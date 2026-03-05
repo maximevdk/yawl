@@ -12,10 +12,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class BeanRegistry {
-    private static final Map<String, Object> BEANS = new ConcurrentHashMap<>();
-    private static final Map<Class<?>, List<Object>> BEANS_BY_TYPE = new ConcurrentHashMap<>();
+    private final Map<String, Object> BEANS = new ConcurrentHashMap<>();
+    private final Map<Class<?>, List<Object>> BEANS_BY_TYPE = new ConcurrentHashMap<>();
 
-    public static void registerBean(String name, Object object, Class<?> clazz) {
+    public void registerBean(String name, Object object, Class<?> clazz) {
         if (BEANS.containsKey(name)) {
             throw DuplicateBeanException.forBeanName(name);
         }
@@ -31,25 +31,25 @@ final class BeanRegistry {
         });
     }
 
-    public static <T> T getBeanByNameOrThrow(String name, Class<T> clazz) {
+    public <T> T getBeanByNameOrThrow(String name, Class<T> clazz) {
         var bean = getBeanByNameOrThrow(name);
 
-        if (clazz == bean.getClass()) {
+        if (clazz.isAssignableFrom(bean.getClass())) {
             return (T) bean;
         }
 
         throw NoSuchBeanException.forClass(clazz);
     }
 
-    public static <T> T getBeanByNameOrThrow(String name) {
+    public <T> T getBeanByNameOrThrow(String name) {
         return (T) Optional.ofNullable(BEANS.get(name)).orElseThrow(() -> NoSuchBeanException.forName(name));
     }
 
-    public static <T> Optional<T> getBeanByName(String name) {
+    public <T> Optional<T> getBeanByName(String name) {
         return Optional.ofNullable((T) BEANS.get(name));
     }
 
-    public static <T> T findBeanByTypeOrThrow(Class<T> clazz) {
+    public <T> T findBeanByTypeOrThrow(Class<T> clazz) {
         var beansByType = BEANS_BY_TYPE.getOrDefault(clazz, List.of());
 
         if (beansByType.isEmpty()) {
@@ -63,15 +63,15 @@ final class BeanRegistry {
         return (T) beansByType.getFirst();
     }
 
-    public static <T> List<T> findBeansByType(Class<T> clazz) {
-        return (List<T>) BEANS_BY_TYPE.getOrDefault(clazz,  List.of());
+    public <T> List<T> findBeansByType(Class<T> clazz) {
+        return (List<T>) BEANS_BY_TYPE.getOrDefault(clazz, List.of());
     }
 
-    public static <T> boolean containsBeanOfType(Class<T> clazz) {
+    public <T> boolean containsBeanOfType(Class<T> clazz) {
         return !BEANS_BY_TYPE.getOrDefault(clazz, List.of()).isEmpty();
     }
 
-    public static <T> Optional<T> findBeanByType(Class<T> clazz) {
+    public <T> Optional<T> findBeanByType(Class<T> clazz) {
         var beansByType = BEANS_BY_TYPE.getOrDefault(clazz, List.of());
 
         if (beansByType.size() > 1) {
@@ -81,17 +81,17 @@ final class BeanRegistry {
         return beansByType.stream().map(item -> (T) item).findFirst();
     }
 
-    public static Map<String, Class<?>> getBeansByName() {
+    public Map<String, Class<?>> getBeansByName() {
         return BEANS.entrySet().stream()
                 .map(entry -> Map.entry(entry.getKey(), entry.getValue().getClass()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    public static Stream<Object> streamBeans() {
+    public Stream<Object> streamBeans() {
         return BEANS.values().stream();
     }
 
-    public static void clear() {
+    public void clear() {
         BEANS.clear();
         BEANS_BY_TYPE.clear();
     }

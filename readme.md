@@ -9,7 +9,7 @@ However, while certain aspects may appear similar, all code has been written ind
 <dependency>
     <groupId>com.maxime</groupId>
     <artifactId>yawl</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.4-SNAPSHOT</version>
 </dependency>
 ```
 

@@ -7,6 +7,7 @@ import com.yawl.annotations.PathParam;
 import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.PutMapping;
 import com.yawl.annotations.QueryParam;
+import com.yawl.annotations.RequestBody;
 
 import java.util.List;
 
@@ -26,6 +27,9 @@ public interface RestClient {
 
     @PostMapping(path = "/ping")
     Pong post(@QueryParam(name = "name") String name);
+
+    @PostMapping(path = "/ping/with-body")
+    void post(@RequestBody Pong pong);
 
     @PutMapping(path = "/ping/{id}")
     void put(@PathParam(name = "id") String id, @QueryParam(name = "name") String name);

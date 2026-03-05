@@ -52,6 +52,7 @@ public class BeanCreationService {
                 .filter(client -> client.isAnnotationPresent(HttpClient.class))
                 .collect(collectingAndThen(Collectors.toSet(), this::createHttpClients));
 
+        //TODO: fix: check for circular dependencies
         //TODO: fix: even though more dynamic, Configuration annotated classes need to be defined first...
         var beans = new HashSet<BeanWrapper<?>>();
         ReflectionUtil.getClassesAnnotatedWith(Configuration.class).stream().flatMap(this::createWrappersWithSupplier).forEach(beans::add);

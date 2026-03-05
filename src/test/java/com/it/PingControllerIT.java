@@ -90,6 +90,13 @@ public class PingControllerIT {
     }
 
     @Test
+    void post_withBody() {
+        var pong = new Pong("123", "test");
+        restClient.post(pong);
+        assertEquals(pong, repository.getPing(pong.id()));
+    }
+
+    @Test
     void put() {
         var pong = repository.setPing("test");
 

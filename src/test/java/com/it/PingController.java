@@ -6,6 +6,7 @@ import com.yawl.annotations.PathParam;
 import com.yawl.annotations.PostMapping;
 import com.yawl.annotations.PutMapping;
 import com.yawl.annotations.QueryParam;
+import com.yawl.annotations.RequestBody;
 import com.yawl.annotations.WebController;
 import com.yawl.http.model.HttpStatus;
 
@@ -38,6 +39,11 @@ public class PingController {
     @PostMapping(status = HttpStatus.ACCEPTED)
     public Pong setPing(@QueryParam(name = "name") String name) {
         return pingService.set(name);
+    }
+
+    @PostMapping(path = "with-body", status = HttpStatus.CREATED)
+    public void postPing(@RequestBody Pong pong) {
+        pingService.set(pong);
     }
 
     @PutMapping(path = "{id}", status = HttpStatus.ACCEPTED)

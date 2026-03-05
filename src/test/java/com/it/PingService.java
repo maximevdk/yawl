@@ -26,6 +26,10 @@ public class PingService {
         return repository.setPing(name);
     }
 
+    public void set(Pong pong) {
+        repository.setPing(pong);
+    }
+
     public void update(String id, String name) {
         repository.updatePing(id, name);
     }

@@ -2,6 +2,7 @@ package com.yawl;
 
 import com.yawl.annotations.PathParam;
 import com.yawl.annotations.QueryParam;
+import com.yawl.annotations.RequestBody;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
 import com.yawl.events.ApplicationEvent;
@@ -88,7 +89,7 @@ public class DispatcherServlet extends HttpServlet {
         }
     }
 
-    private Object[] getParameterValues(HttpServletRequest req, RegisteredRoute destination) {
+    private Object[] getParameterValues(HttpServletRequest req, RegisteredRoute destination) throws Exception {
         var pathParams = destination.route().extractVariables(req.getRequestURI());
         var parameters = new ArrayList<>();
         for (Parameter parameter : destination.method().getParameters()) {
@@ -96,7 +97,6 @@ public class DispatcherServlet extends HttpServlet {
                 var queryParam = parameter.getAnnotation(QueryParam.class);
                 var name = queryParam.name() != null ? queryParam.name() : parameter.getName();
                 var value = StringUtils.parse(req.getParameterValues(name), parameter.getParameterizedType());
-
                 Optional.ofNullable(value).ifPresentOrElse(parameters::add, () -> {
                     if (queryParam.required()) {
                         throw MissingRequiredParameterException.of(name);
@@ -105,7 +105,12 @@ public class DispatcherServlet extends HttpServlet {
             } else if (parameter.isAnnotationPresent(PathParam.class)) {
                 var pathParam = parameter.getAnnotation(PathParam.class);
                 Optional.ofNullable(pathParams.get(pathParam.name()))
-                        .ifPresentOrElse(parameters::add, () -> MissingPathParameterException.forPath(destination.route(), pathParam.name()));
+                        .ifPresentOrElse(parameters::add, () -> {
+                            throw MissingPathParameterException.forPath(destination.route(), pathParam.name());
+                        });
+            } else if (parameter.isAnnotationPresent(RequestBody.class)) {
+                var body = jsonMapper.readValue(req.getReader(), parameter.getType());
+                parameters.add(body);
             }
         }
 
