@@ -9,6 +9,7 @@ import com.yawl.http.model.Header;
 import com.yawl.http.model.Route;
 import com.yawl.model.Health;
 import com.yawl.model.ManagementEndpointType;
+import com.yawl.util.ApplicationContextUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,14 +30,6 @@ public class ManagementServlet extends HttpServlet {
     private final Map<Route, Class<?>> routes = new HashMap<>();
     private final Map<String, Class<?>> beans = new HashMap<>();
 
-    private final ApplicationProperties.Application properties;
-    private final JsonMapper mapper;
-
-    public ManagementServlet(ApplicationProperties.Application properties, JsonMapper mapper) {
-        this.mapper = mapper;
-        this.properties = properties;
-    }
-
     @EventListener
     public void on(ApplicationEvent.RouteRegistryInitialized event) {
         event.routes().stream()
@@ -51,8 +44,11 @@ public class ManagementServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var response = new HashMap<>();
-
         response.put("status", HealthRegistry.systemStatus());
+
+        var ctx = ApplicationContextUtils.getApplicationContext(getServletContext());
+        var properties = ctx.getBeanByTypeOrThrow(ApplicationProperties.Application.class);
+        var mapper = ctx.getBeanByTypeOrThrow(JsonMapper.class);
 
         if (properties.management().endpointEnabled(ManagementEndpointType.HEALTH)) {
             response.put("health", getHealthInformation());

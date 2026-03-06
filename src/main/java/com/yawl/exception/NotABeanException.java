@@ -1,7 +1,5 @@
 package com.yawl.exception;
 
-import java.util.Map;
-
 public class NotABeanException extends RuntimeException {
     private static final String MESSAGE_BY_TYPE = "Class %s is not a registered bean";
 

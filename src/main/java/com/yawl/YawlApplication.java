@@ -42,12 +42,12 @@ public class YawlApplication {
 
         if (properties.web().enabled()) {
             if (properties.management().managementEndpointEnabled()) {
-                var servlet = new ManagementServlet(properties, jsonMapper);
+                var servlet = new ManagementServlet();
                 ctx.register("managementServlet", servlet);
                 registry.registerListeners(servlet);
             }
 
-            var tomcat = new TomcatWebServer(ctx).start();
+            var tomcat = new TomcatWebServer().start(ctx);
             registry.publish(new ApplicationEvent.ApplicationContextRefreshed(ctx));
             //start tomcat in a non daemon thread this results in the application not
             // blocking on this line but advancing to the next line, returning the context
