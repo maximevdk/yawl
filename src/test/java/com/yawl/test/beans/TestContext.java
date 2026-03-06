@@ -29,7 +29,7 @@ public class TestContext {
         var beanCreationService = new BeanCreationService(ctx, eventPublisher);
         beanCreationService.findAndRegisterBeans(classes);
 
-        new TomcatWebServer(ctx).start();
+        new TomcatWebServer().start(ctx);
         return ctx;
     }
 

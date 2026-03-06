@@ -16,6 +16,7 @@ import com.yawl.http.RouteRegistry;
 import com.yawl.http.model.ContentType;
 import com.yawl.http.model.HttpResponse;
 import com.yawl.http.model.RegisteredRoute;
+import com.yawl.util.ApplicationContextUtils;
 import com.yawl.util.StringUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -33,20 +34,17 @@ import java.util.Optional;
 
 public class DispatcherServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(DispatcherServlet.class);
-    private final JsonMapper jsonMapper;
-    private final ApplicationContext applicationContext;
-    private final RouteRegistry routeRegistry;
-    private final ExceptionResolver exceptionResolver;
-
-    public DispatcherServlet(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
-        this.jsonMapper = applicationContext.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME);
-        this.routeRegistry = new RouteRegistry();
-        this.exceptionResolver = new CompositeExceptionResolver(applicationContext.findBeansByType(ExceptionResolver.class));
-    }
+    private final RouteRegistry routeRegistry = new RouteRegistry();
+    private ExceptionResolver exceptionResolver;
+    private ApplicationContext applicationContext;
+    private JsonMapper jsonMapper;
 
     @Override
     public void init() throws ServletException {
+        applicationContext = ApplicationContextUtils.getApplicationContext(getServletContext());
+        exceptionResolver = new CompositeExceptionResolver(applicationContext.findBeansByType(ExceptionResolver.class));
+        jsonMapper = applicationContext.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME);
+
         routeRegistry.init(applicationContext);
         applicationContext.getBeanByTypeOrThrow(EventPublisher.class)
                 .publish(new ApplicationEvent.RouteRegistryInitialized(routeRegistry.getRoutes()));
@@ -71,7 +69,6 @@ public class DispatcherServlet extends HttpServlet {
             writeResponse(ContentType.APPLICATION_JSON, resolved, resp);
         }
     }
-
 
     private HttpResponse<?> invokeRoute(HttpServletRequest req, RegisteredRoute destination) throws Exception {
         var method = destination.method();
@@ -127,8 +124,16 @@ public class DispatcherServlet extends HttpServlet {
         resp.setCharacterEncoding(StandardCharsets.UTF_8);
         resp.setContentType(contentType.value());
 
-        var body = jsonMapper.writeValueAsBytes(response);
-        resp.setContentLength(body.length);
-        resp.getOutputStream().write(body);
+        if (contentType.value().equals(ContentType.APPLICATION_JSON_VALUE)) {
+            var body = jsonMapper.writeValueAsBytes(response);
+            resp.setContentLength(body.length);
+            resp.getOutputStream().write(body);
+        } else {
+            var body = jsonMapper.writeValueAsBytes(HttpResponse.internal("No write found  for contentType: " + contentType.value()));
+            resp.setStatus(500);
+            resp.setContentType(ContentType.APPLICATION_JSON_VALUE);
+            resp.setContentLength(body.length);
+            resp.getOutputStream().write(body);
+        }
     }
 }

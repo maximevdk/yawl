@@ -3,6 +3,7 @@ package com.yawl;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
 import com.yawl.exception.InvalidContextException;
+import com.yawl.util.ApplicationContextUtils;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.StandardVirtualThreadExecutor;
@@ -21,13 +22,7 @@ public final class TomcatWebServer {
     private static final Logger log = LoggerFactory.getLogger(TomcatWebServer.class);
     private static final String TOMCAT_DIRECTORY = "./target/temp";
 
-    private final ApplicationContext applicationContext;
-
-    public TomcatWebServer(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
-    }
-
-    public Tomcat start() {
+    public Tomcat start(ApplicationContext applicationContext) {
         var properties = applicationContext.getBeanByNameOrThrow(CommonBeans.APPLICATION_PROPERTIES_NAME, ApplicationProperties.Application.class);
         var config = properties.web().config();
         var tomcat = new Tomcat();
@@ -35,8 +30,9 @@ public final class TomcatWebServer {
         tomcat.setPort(config.port());
 
         var context = tomcat.addContext(config.contextPath(), properties.basePath());
+        ApplicationContextUtils.setApplicationContext(context.getServletContext(), applicationContext);
         context.addLifecycleListener(new TomcatLifecycleListener());
-        context.addServletContainerInitializer(new DefaultServletContainerInitializer(applicationContext), Set.of());
+        context.addServletContainerInitializer(new DefaultServletContainerInitializer(), Set.of());
 
         var connector = new Connector();
         connector.setPort(config.port());
