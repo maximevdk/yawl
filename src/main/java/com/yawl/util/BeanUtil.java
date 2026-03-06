@@ -3,7 +3,6 @@ package com.yawl.util;
 import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
 import com.yawl.annotations.WebController;
-import com.yawl.exception.NotABeanException;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -23,7 +22,7 @@ public final class BeanUtil {
 
     public static String getBeanName(Class<?> clazz) {
         if (!isBean(clazz)) {
-            throw NotABeanException.forClass(clazz);
+            return decapitalize(clazz.getSimpleName());
         }
 
         return ENABLED_ANNOTATIONS.stream()

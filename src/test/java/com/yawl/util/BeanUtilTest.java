@@ -5,6 +5,7 @@ import com.yawl.annotations.Service;
 import com.yawl.annotations.WebController;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,11 +19,19 @@ class BeanUtilTest {
         assertFalse(BeanUtil.isBean(Test4.class), "Test4 is not a bean");
     }
 
-    @Repository
+    @Test
+    void getName() {
+        assertEquals("repo", BeanUtil.getBeanName(Test1.class));
+        assertEquals("service", BeanUtil.getBeanName(Test2.class));
+        assertEquals("test3", BeanUtil.getBeanName(Test3.class));
+        assertEquals("test4", BeanUtil.getBeanName(Test4.class));
+    }
+
+    @Repository(name = "repo")
     class Test1 {
     }
 
-    @Service
+    @Service(name = "service")
     class Test2 {
     }
 

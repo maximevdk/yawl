@@ -4,6 +4,7 @@ import com.yawl.exception.NoAccessibleConstructorFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
@@ -14,7 +15,7 @@ public final class ConstructorUtil {
     private static final Logger log = LoggerFactory.getLogger(ConstructorUtil.class);
 
     public static <T> Optional<T> newInstance(Class<T> clazz, Object... args) {
-        log.trace("Finding suitable constructor for class {}", (Object) clazz.getDeclaredConstructors());
+        log.trace("Finding suitable constructor for class {}", (Object) clazz.getConstructors());
         var constructor = Arrays.stream(clazz.getDeclaredConstructors())
                 .filter(c -> c.canAccess(null))
                 .filter(c -> c.getParameterCount() == args.length)
@@ -29,6 +30,16 @@ public final class ConstructorUtil {
         }
     }
 
+    public static <T> Optional<T> newInstance(Constructor<T> constructor, List<?> args) {
+        try {
+            return Optional.of(constructor.newInstance(args.toArray()));
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
+            log.error("Unable to create instance of class {}", constructor.getDeclaringClass(), ex);
+            //ignore because it is our fault :grim:
+            return Optional.empty();
+        }
+    }
+
     public static List<Parameter> getRequiredConstructorParameters(Class<?> clazz) {
         // Reverse order
         var constructor = Arrays.stream(clazz.getDeclaredConstructors())
@@ -38,6 +49,13 @@ public final class ConstructorUtil {
 
         log.trace("Found constructor with parameters {}", (Object) constructor.getParameterTypes());
         return List.of(constructor.getParameters());
+    }
+
+    public static Constructor<?> getConstructorOrThrow(Class<?> clazz) {
+        return Arrays.stream(clazz.getConstructors())
+                .filter(c -> c.canAccess(null))
+                .min((c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount()))
+                .orElseThrow(() -> NoAccessibleConstructorFoundException.forClass(clazz));
     }
 
 }
