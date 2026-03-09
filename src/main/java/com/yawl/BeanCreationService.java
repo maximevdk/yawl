@@ -177,7 +177,7 @@ public class BeanCreationService {
     }
 
     private void registerBean(BeanWrapper<?> bean, Object instance) {
-        applicationContext.register(bean.name(), instance, bean.type());
+        applicationContext.register(bean.name(), instance);
         eventRegistry.registerListeners(instance);
     }
 
