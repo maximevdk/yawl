@@ -2,11 +2,15 @@ package com.yawl;
 
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TomcatWebAppInitializer implements ServletContextListener {
+    private static final Logger log = LoggerFactory.getLogger(TomcatWebAppInitializer.class);
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        System.out.println("TomcatWebAppInitializer contextInitialized");
+        //TODO: use this in the future when needed
+        log.trace("TomcatWebAppInitializer contextInitialized");
     }
 }

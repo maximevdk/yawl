@@ -10,6 +10,7 @@ import com.yawl.http.model.Route;
 import com.yawl.model.Health;
 import com.yawl.model.ManagementEndpointType;
 import com.yawl.util.ApplicationContextUtils;
+import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,6 +31,9 @@ public class ManagementServlet extends HttpServlet {
     private final Map<Route, Class<?>> routes = new HashMap<>();
     private final Map<String, Class<?>> beans = new HashMap<>();
 
+    private JsonMapper mapper;
+    private ApplicationProperties.Application properties;
+
     @EventListener
     public void on(ApplicationEvent.RouteRegistryInitialized event) {
         event.routes().stream()
@@ -41,14 +45,18 @@ public class ManagementServlet extends HttpServlet {
         beans.putAll(event.applicationContext().beansByName());
     }
 
+
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        var ctx = ApplicationContextUtils.getApplicationContext(getServletContext());
+        properties = ctx.getBeanByTypeOrThrow(ApplicationProperties.Application.class);
+        mapper = ctx.getBeanByTypeOrThrow(JsonMapper.class);
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var response = new HashMap<>();
         response.put("status", HealthRegistry.systemStatus());
-
-        var ctx = ApplicationContextUtils.getApplicationContext(getServletContext());
-        var properties = ctx.getBeanByTypeOrThrow(ApplicationProperties.Application.class);
-        var mapper = ctx.getBeanByTypeOrThrow(JsonMapper.class);
 
         if (properties.management().endpointEnabled(ManagementEndpointType.HEALTH)) {
             response.put("health", getHealthInformation());
