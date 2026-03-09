@@ -6,16 +6,16 @@ import com.yawl.exception.NoSuchBeanException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class BeanRegistry {
     private final Map<String, Object> BEANS = new ConcurrentHashMap<>();
     private final Map<Class<?>, List<Object>> BEANS_BY_TYPE = new ConcurrentHashMap<>();
 
-    public void registerBean(String name, Object object, Class<?> clazz) {
+    void registerBean(String name, Object object, Class<?> clazz) {
         if (BEANS.containsKey(name)) {
             throw DuplicateBeanException.forBeanName(name);
         }
@@ -31,7 +31,30 @@ final class BeanRegistry {
         });
     }
 
-    public <T> T getBeanByNameOrThrow(String name, Class<T> clazz) {
+    /**
+     * Register instance just by type, the instance won't be findable by name.
+     * This method should only be used to register inheriting interfaces or superclasses.
+     *
+     * @param object the instance
+     * @param clazz  the interface/superclass type of the instance
+     */
+    void registerBeanType(Object object, Class<?> clazz) {
+        BEANS_BY_TYPE.compute(clazz, (key, value) -> {
+            if (value == null) {
+                return new ArrayList<>(List.of(object));
+            } else {
+                var shouldBeAdded = value.stream()
+                        .noneMatch(obj -> Objects.equals(obj, object));
+
+                if (shouldBeAdded) {
+                    value.add(object);
+                }
+                return value;
+            }
+        });
+    }
+
+    <T> T getBeanByNameOrThrow(String name, Class<T> clazz) {
         var bean = getBeanByNameOrThrow(name);
 
         if (clazz.isAssignableFrom(bean.getClass())) {
@@ -41,15 +64,15 @@ final class BeanRegistry {
         throw NoSuchBeanException.forClass(clazz);
     }
 
-    public <T> T getBeanByNameOrThrow(String name) {
+    <T> T getBeanByNameOrThrow(String name) {
         return (T) Optional.ofNullable(BEANS.get(name)).orElseThrow(() -> NoSuchBeanException.forName(name));
     }
 
-    public <T> Optional<T> getBeanByName(String name) {
+    <T> Optional<T> getBeanByName(String name) {
         return Optional.ofNullable((T) BEANS.get(name));
     }
 
-    public <T> T findBeanByTypeOrThrow(Class<T> clazz) {
+    <T> T findBeanByTypeOrThrow(Class<T> clazz) {
         var beansByType = BEANS_BY_TYPE.getOrDefault(clazz, List.of());
 
         if (beansByType.isEmpty()) {
@@ -63,15 +86,15 @@ final class BeanRegistry {
         return (T) beansByType.getFirst();
     }
 
-    public <T> List<T> findBeansByType(Class<T> clazz) {
+    <T> List<T> findBeansByType(Class<T> clazz) {
         return (List<T>) BEANS_BY_TYPE.getOrDefault(clazz, List.of());
     }
 
-    public <T> boolean containsBeanOfType(Class<T> clazz) {
+    <T> boolean containsBeanOfType(Class<T> clazz) {
         return !BEANS_BY_TYPE.getOrDefault(clazz, List.of()).isEmpty();
     }
 
-    public <T> Optional<T> findBeanByType(Class<T> clazz) {
+    <T> Optional<T> findBeanByType(Class<T> clazz) {
         var beansByType = BEANS_BY_TYPE.getOrDefault(clazz, List.of());
 
         if (beansByType.size() > 1) {
@@ -81,17 +104,12 @@ final class BeanRegistry {
         return beansByType.stream().map(item -> (T) item).findFirst();
     }
 
-    public Map<String, Class<?>> getBeansByName() {
+    Stream<Map.Entry<String, Class<?>>> streamBeans() {
         return BEANS.entrySet().stream()
-                .map(entry -> Map.entry(entry.getKey(), entry.getValue().getClass()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .map(entry -> Map.entry(entry.getKey(), entry.getValue().getClass()));
     }
 
-    public Stream<Object> streamBeans() {
-        return BEANS.values().stream();
-    }
-
-    public void clear() {
+    void clear() {
         BEANS.clear();
         BEANS_BY_TYPE.clear();
     }
