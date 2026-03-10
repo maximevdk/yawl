@@ -3,6 +3,7 @@ package com.yawl.beans;
 import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
 import com.yawl.annotations.WebController;
+import com.yawl.exception.DuplicateBeanException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -13,6 +14,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ApplicationContextTest {
 
@@ -41,6 +43,35 @@ class ApplicationContextTest {
                 .containsExactlyInAnyOrder(Bean4.class);
         assertThat(ctx.getBeansAnnotatedWith(WebController.class))
                 .isEmpty();
+    }
+
+    @Test
+    void findBeansByType() {
+        var ctx = new ApplicationContext();
+        var sameTypeBean1 = new Bean4();
+        var sameTypeBean2 = new Bean6();
+        ctx.register("sameType1", sameTypeBean1);
+        ctx.register("sameType2", sameTypeBean2);
+
+        assertThat(ctx.findBeansByType(Test2.class))
+                .containsExactlyInAnyOrder(sameTypeBean1, sameTypeBean2);
+        assertThat(ctx.findBeansByType(Test3.class))
+                .containsExactlyInAnyOrder(sameTypeBean1, sameTypeBean2);
+        assertThat(ctx.findBeansByType(SuperClass.class))
+                .containsExactlyInAnyOrder(sameTypeBean2);
+    }
+
+    @Test
+    void findBeanByTypeOrThrow() {
+        var ctx = new ApplicationContext();
+        var sameTypeBean1 = new Bean4();
+        var sameTypeBean2 = new Bean6();
+        ctx.register("sameType1", sameTypeBean1);
+        ctx.register("sameType2", sameTypeBean2);
+
+        assertThrows(DuplicateBeanException.class, () -> ctx.getBeanByTypeOrThrow(Test2.class));
+        assertThrows(DuplicateBeanException.class, () -> ctx.getBeanByTypeOrThrow(Test3.class));
+        assertThat(ctx.getBeanByTypeOrThrow(SuperClass.class)).isNotNull();
     }
 
     public static Stream<Arguments> provideArguments() {
