@@ -6,8 +6,8 @@
     <version>0.0.4-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>yawl</name>
-    <url>http://maven.apache.org</url>
-
+    <description>Tiny web framework written in java</description>
+    <url>https://github.com/maximevdk/yawl</url>
 
     <properties>
         <java.version>25</java.version>
@@ -97,7 +97,6 @@
             <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
 
@@ -140,4 +139,35 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>yawl</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>yawl</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Maxime Van den Kerkhof</name>
+            <organizationUrl>https://github.com/maximevdk</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/maximevdk/yawl.git</connection>
+        <developerConnection>scm:git:ssh://github.com/maximevdk/yawl.git</developerConnection>
+        <url>https://github.com/maximevdk/yawl/tree/master</url>
+    </scm>
 </project>
