@@ -168,6 +168,6 @@
     <scm>
         <connection>scm:git:git://github.com/maximevdk/yawl.git</connection>
         <developerConnection>scm:git:ssh://github.com/maximevdk/yawl.git</developerConnection>
-        <url>https://github.com/maximevdk/ossrh-demo/tree/master</url>
+        <url>https://github.com/maximevdk/yawl/tree/master</url>
     </scm>
 </project>
