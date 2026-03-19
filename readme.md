@@ -7,9 +7,9 @@ However, while certain aspects may appear similar, all code has been written ind
 ## Installation (maven)
 ```xml
 <dependency>
-    <groupId>com.maxime</groupId>
+    <groupId>io.github.maximevdk</groupId>
     <artifactId>yawl</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
