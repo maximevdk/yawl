@@ -3,10 +3,13 @@ application:
   config:
     location: application.yml
   web:
-    enabled: false
+    enabled: true
     config:
-      port: 8080
+      port: 0
       context-path: /
+      virtual-threads:
+        enabled: true
+        name: virtual-thread-
   management:
     endpoint:
       enabled: false

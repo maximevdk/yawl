@@ -28,7 +28,7 @@ public class YawlMvcTestExtension implements BeforeEachCallback, BeforeAllCallba
             includes.add(yawlMvcTest.controller());
             includes.addAll(List.of(yawlMvcTest.imports()));
 
-            var ctx = new TestContext().buildTestContext(includes, DEFAULT_CONFIG_LOCATION);
+            var ctx = new TestContext(context.getRequiredTestClass()).buildTestContext(includes, DEFAULT_CONFIG_LOCATION);
             context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
         }
     }
@@ -61,7 +61,7 @@ public class YawlMvcTestExtension implements BeforeEachCallback, BeforeAllCallba
             includes.add(yawlMvcTest.controller());
             includes.addAll(List.of(yawlMvcTest.imports()));
 
-            var ctx = new TestContext().buildTestContext(includes, DEFAULT_CONFIG_LOCATION);
+            var ctx = new TestContext(context.getRequiredTestClass()).buildTestContext(includes, DEFAULT_CONFIG_LOCATION);
             context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
         }
     }

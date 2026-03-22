@@ -48,7 +48,7 @@ public class ManagementServlet extends HttpServlet {
 
     @Override
     public void init(ServletConfig config) throws ServletException {
-        var ctx = ApplicationContextUtils.getApplicationContext(getServletContext());
+        var ctx = ApplicationContextUtils.getApplicationContext(config.getServletContext());
         properties = ctx.getBeanByTypeOrThrow(ApplicationProperties.Application.class);
         mapper = ctx.getBeanByTypeOrThrow(JsonMapper.class);
     }
