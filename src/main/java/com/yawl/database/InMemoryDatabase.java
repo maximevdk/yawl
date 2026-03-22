@@ -2,8 +2,10 @@ package com.yawl.database;
 
 import com.yawl.exception.MemoryDbDuplicateKeyException;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 public abstract class InMemoryDatabase<KEY, OBJ> {
     private final Map<KEY, OBJ> memoryDb = new ConcurrentHashMap<>();
@@ -26,5 +28,12 @@ public abstract class InMemoryDatabase<KEY, OBJ> {
 
     public void delete(KEY key) {
         memoryDb.remove(key);
+    }
+
+    public List<OBJ> find(Predicate<OBJ> predicate) {
+        return memoryDb.values()
+                .stream()
+                .filter(predicate)
+                .toList();
     }
 }
