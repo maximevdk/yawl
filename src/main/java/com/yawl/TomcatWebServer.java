@@ -5,6 +5,7 @@ import com.yawl.beans.CommonBeans;
 import com.yawl.exception.InvalidContextException;
 import com.yawl.util.ApplicationContextUtils;
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.LifecycleState;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.StandardVirtualThreadExecutor;
 import org.apache.catalina.startup.Tomcat;
@@ -18,15 +19,20 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Set;
 
-public final class TomcatWebServer {
+public final class TomcatWebServer implements WebServer {
     private static final Logger log = LoggerFactory.getLogger(TomcatWebServer.class);
     private static final String TOMCAT_DIRECTORY = "./target/temp";
+    private final Tomcat tomcat;
 
-    public Tomcat start(ApplicationContext applicationContext) {
+    public TomcatWebServer() {
+        tomcat = new Tomcat();
+        tomcat.setBaseDir(TOMCAT_DIRECTORY);
+    }
+
+    @Override
+    public void start(ApplicationContext applicationContext) {
         var properties = applicationContext.getBeanByNameOrThrow(CommonBeans.APPLICATION_PROPERTIES_NAME, ApplicationProperties.Application.class);
         var config = properties.web().config();
-        var tomcat = new Tomcat();
-        tomcat.setBaseDir(TOMCAT_DIRECTORY);
         tomcat.setPort(config.port());
 
         var context = tomcat.addContext(config.contextPath(), properties.basePath());
@@ -52,7 +58,7 @@ public final class TomcatWebServer {
         tomcat.setConnector(connector);
 
         try {
-            log.info("Starting YAWL Application {} in {} on port {}", properties.name(), properties.basePath(), config.port());
+            log.info("Starting YAWL Application {} in {} on port {}", properties.name(), properties.basePath(), tomcat.getConnector().getLocalPort());
 
             var beforeStartTime = System.currentTimeMillis();
             tomcat.start();
@@ -63,28 +69,44 @@ public final class TomcatWebServer {
             throw new InvalidContextException("Unable to launch Tomcat", ex);
         }
 
-        configureShutdownHook(tomcat);
+        configureShutdownHook();
+    }
+
+    @Override
+    public void stop() {
+        try {
+            tomcat.stop();
+            tomcat.destroy();
+        } catch (LifecycleException ex) {
+            //ignore
+            log.error("Error stopping Tomcat", ex);
+        }
+
+        try (var files = Files.walk(Paths.get(TOMCAT_DIRECTORY))) {
+            files.sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+            log.info("Tomcat directory {} deleted successfully.", tomcat.getServer().getCatalinaBase());
+        } catch (Exception ex) {
+            // ignore
+        }
+    }
+
+    @Override
+    public boolean isRunning() {
+        return tomcat.getServer().getState() == LifecycleState.STARTED;
+    }
+
+    @Override
+    public int port() {
+        return tomcat.getConnector().getLocalPort();
+    }
+
+    Tomcat getTomcat() {
         return tomcat;
     }
 
-    private static void configureShutdownHook(Tomcat tomcat) {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                tomcat.stop();
-                tomcat.destroy();
-            } catch (LifecycleException ex) {
-                //ignore
-                log.error("Error stopping Tomcat", ex);
-            }
-
-            try (var files = Files.walk(Paths.get(TOMCAT_DIRECTORY))) {
-                files.sorted(Comparator.reverseOrder())
-                        .map(Path::toFile)
-                        .forEach(File::delete);
-                log.info("Tomcat directory {} deleted successfully.", tomcat.getServer().getCatalinaBase());
-            } catch (Exception ex) {
-                // ignore
-            }
-        }));
+    private void configureShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
     }
 }

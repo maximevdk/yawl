@@ -47,11 +47,14 @@ public class YawlApplication {
                 registry.registerListeners(servlet);
             }
 
-            var tomcat = new TomcatWebServer().start(ctx);
+            var webserver = new TomcatWebServer();
+            webserver.start(ctx);
+
+            ctx.register(CommonBeans.WEB_SERVER_NAME, webserver);
             registry.publish(new ApplicationEvent.ApplicationContextRefreshed(ctx));
             //start tomcat in a non daemon thread this results in the application not
             // blocking on this line but advancing to the next line, returning the context
-            startNonDaemonAwaitThread(tomcat, baseClass);
+            startNonDaemonAwaitThread(webserver.getTomcat(), baseClass);
         }
 
         return ctx;

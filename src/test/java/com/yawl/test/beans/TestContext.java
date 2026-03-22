@@ -9,10 +9,15 @@ import com.yawl.beans.CommonBeans;
 import com.yawl.events.Event;
 import com.yawl.events.EventListenerRegistrar;
 import com.yawl.events.EventPublisher;
+import com.yawl.util.ReflectionUtil;
 
 import java.util.Set;
 
 public class TestContext {
+
+    public TestContext(Class<?> testClass) {
+        ReflectionUtil.init(testClass);
+    }
 
     public ApplicationContext buildTestContext(Set<Class<?>> classes, String defaultConfigLocation) {
         var yamlMapper = JacksonConfiguration.buildYamlMapper();

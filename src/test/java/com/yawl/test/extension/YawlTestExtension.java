@@ -1,8 +1,11 @@
 package com.yawl.test.extension;
 
+import com.yawl.WebServer;
 import com.yawl.YawlApplication;
 import com.yawl.annotations.Autowired;
 import com.yawl.beans.ApplicationContext;
+import com.yawl.beans.CommonBeans;
+import com.yawl.test.annotation.LocalTestPort;
 import com.yawl.test.annotation.YawlTest;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -32,6 +35,14 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
         Arrays.stream(testInstance.getClass().getDeclaredFields())
                 .filter(field -> field.isAnnotationPresent(Autowired.class))
                 .forEach(field -> setFieldValue(testInstance, field, ctx.getBeanByTypeOrThrow(field.getType())));
+
+        if (ctx.containsBeanOfType(WebServer.class)) {
+            var webserver = ctx.getBeanByNameOrThrow(CommonBeans.WEB_SERVER_NAME, WebServer.class);
+            Arrays.stream(testInstance.getClass().getDeclaredFields())
+                    .filter(field -> field.isAnnotationPresent(LocalTestPort.class))
+                    .findFirst().ifPresent(field -> setFieldValue(testInstance, field, webserver.port()));
+        }
+
     }
 
     @Override
@@ -39,7 +50,7 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
         var config = context.getRequiredTestClass().getAnnotation(YawlTest.class);
 
         if (config.dirtiesContext()) {
-            context.getStore(ExtensionContext.Namespace.GLOBAL).remove(APPLICATION_CTX_KEY, ApplicationContext.class);
+            //TODO: handle dirties context after each, without having to restart tomcat
         }
     }
 
@@ -68,6 +79,10 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
     public void afterAll(ExtensionContext context) throws Exception {
         var ctx = context.getStore(ExtensionContext.Namespace.GLOBAL).remove(APPLICATION_CTX_KEY, ApplicationContext.class);
         if (ctx != null) {
+            if (ctx.containsBeanOfType(WebServer.class)) {
+                ctx.getBeanByTypeOrThrow(WebServer.class).stop();
+            }
+
             ctx.clear();
         }
     }
