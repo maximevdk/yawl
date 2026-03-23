@@ -3,8 +3,10 @@ package com.yawl.util;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,6 +46,15 @@ class StringUtilsTest {
 
         assertThat((String) StringUtils.parse(new String[]{"hello"}, String.class)).isEqualTo("hello");
         assertThat((String) StringUtils.parse(null, String.class)).isNull();
+
+        var uuid = UUID.randomUUID();
+        assertThat((UUID) StringUtils.parse(new String[]{uuid.toString()}, UUID.class)).isEqualTo(uuid);
+
+        var lng = 10L;
+        assertThat((Long) StringUtils.parse(new String[]{"10"}, Long.class)).isEqualTo(lng);
+
+        var localDate = LocalDate.parse("2020-02-02");
+        assertThat((LocalDate) StringUtils.parse(new String[]{"2020-02-02"}, LocalDate.class)).isEqualTo(localDate);
     }
 
     @Test

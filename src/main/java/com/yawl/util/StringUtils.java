@@ -2,19 +2,24 @@ package com.yawl.util;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class StringUtils {
     private static final Map<Class<?>, Function<String, ?>> STRING_PARSER_FN = Map.of(
             int.class, Integer::parseInt,
-            Integer.class, Integer::parseInt
+            Integer.class, Integer::parseInt,
+            Long.class, Long::parseLong,
+            UUID.class, UUID::fromString,
+            LocalDate.class, LocalDate::parse
     );
 
     public static boolean hasText(String value) {
