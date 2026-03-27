@@ -2,10 +2,13 @@ package com.yawl;
 
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
+import com.yawl.common.util.ReflectionUtil;
+import com.yawl.configuration.ApplicationProperties;
+import com.yawl.configuration.CommonConfiguration;
+import com.yawl.configuration.WebConfiguration;
 import com.yawl.events.ApplicationEvent;
 import com.yawl.events.EventPublisher;
 import com.yawl.events.EventRegistry;
-import com.yawl.util.ReflectionUtil;
 import org.apache.catalina.startup.Tomcat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,30 +23,29 @@ public class YawlApplication {
         //initialize reflection
         ReflectionUtil.init(baseClass);
 
-        //initialize and register basic beans
-        var yamlMapper = JacksonConfiguration.buildYamlMapper();
-        var jsonMapper = JacksonConfiguration.buildJsonMapper();
-        var properties = getMergedApplicationConfiguration(yamlMapper, args);
-
+        // create application context
+        var ctx = new ApplicationContext();
         //initialize event handler
         var registry = new EventRegistry();
+        var beanCreationService = new BeanCreationService(ctx, registry);
 
-        var ctx = new ApplicationContext();
+        //initialize and register basic beans
+        beanCreationService.findAndRegisterBeans(CommonConfiguration.class);
+        var properties = getMergedApplicationConfiguration(ctx, args);
+
         ctx.register(CommonBeans.APPLICATION_PROPERTIES_NAME, properties);
-        ctx.register(CommonBeans.YAML_MAPPER_NAME, yamlMapper);
-        ctx.register(CommonBeans.JSON_MAPPER_NAME, jsonMapper);
         ctx.register(CommonBeans.EVENT_PUBLISHER_NAME, registry, EventPublisher.class);
-        CommonBeans.registerExceptionResolvers(ctx);
 
         //initialize user defined beans
-        var beanCreationService = new BeanCreationService(ctx, registry);
         beanCreationService.findAndRegisterBeans();
         registry.publish(new ApplicationEvent.ApplicationContextInitialized(ctx));
 
         if (properties.web().enabled()) {
+            beanCreationService.findAndRegisterBeans(WebConfiguration.class);
+
             if (properties.management().managementEndpointEnabled()) {
                 var servlet = new ManagementServlet();
-                ctx.register("managementServlet", servlet);
+                ctx.register("managementServlet", servlet, ManagementServlet.class);
                 registry.registerListeners(servlet);
             }
 
@@ -60,7 +62,7 @@ public class YawlApplication {
         return ctx;
     }
 
-    private static ApplicationProperties.Application getMergedApplicationConfiguration(YAMLMapper yamlMapper, String... args) {
+    private static ApplicationProperties.Application getMergedApplicationConfiguration(ApplicationContext ctx, String... args) {
         var defaultConfigLocation = Stream.of(args)
                 .filter(arg -> arg.startsWith("--config.location"))
                 .map(arg -> arg.replace("--config.location=", ""))
@@ -68,7 +70,7 @@ public class YawlApplication {
 
         log.debug("Using default configuration location: {}", defaultConfigLocation);
 
-        var initializer = new ApplicationPropertiesInitializer(yamlMapper);
+        var initializer = new ApplicationPropertiesInitializer(ctx.getBeanByTypeOrThrow(YAMLMapper.class));
         return initializer.init(defaultConfigLocation);
     }
 

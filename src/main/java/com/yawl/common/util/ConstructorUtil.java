@@ -1,4 +1,4 @@
-package com.yawl.util;
+package com.yawl.common.util;
 
 import com.yawl.exception.NoAccessibleConstructorFoundException;
 import org.slf4j.Logger;

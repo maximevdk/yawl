@@ -1,8 +1,8 @@
-package com.yawl;
+package com.yawl.configuration;
 
 import com.yawl.model.ManagementEndpointType;
-import com.yawl.util.RegexUtil;
-import com.yawl.util.StringUtils;
+import com.yawl.common.util.RegexUtil;
+import com.yawl.common.util.StringUtils;
 
 import java.io.File;
 import java.util.List;

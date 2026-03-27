@@ -1,6 +1,6 @@
 package com.yawl.http.client;
 
-import com.yawl.util.StringUtils;
+import com.yawl.common.util.StringUtils;
 
 record Parameter(String name, Object value, In in) {
 

@@ -1,4 +1,4 @@
-package com.yawl.util;
+package com.yawl.common.util;
 
 import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static com.yawl.util.StringUtils.decapitalize;
+import static com.yawl.common.util.StringUtils.decapitalize;
 
 public final class BeanUtil {
     private static final List<Class<? extends Annotation>> ENABLED_ANNOTATIONS = List.of(Service.class, Repository.class, WebController.class);

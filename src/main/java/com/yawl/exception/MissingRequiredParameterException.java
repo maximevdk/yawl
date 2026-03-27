@@ -1,6 +1,6 @@
 package com.yawl.exception;
 
-public class MissingRequiredParameterException extends RuntimeException {
+public class MissingRequiredParameterException extends ClientException {
     private MissingRequiredParameterException(String message) {
         super(message);
     }

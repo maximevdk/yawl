@@ -4,6 +4,7 @@ import com.yawl.annotations.Bean;
 import com.yawl.annotations.Configuration;
 import com.yawl.annotations.EnableHttpClients;
 import com.yawl.annotations.HttpClient;
+import com.yawl.annotations.Import;
 import com.yawl.annotations.TypedBean;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.CommonBeans;
@@ -12,10 +13,10 @@ import com.yawl.exception.UnableToInitializeBeanException;
 import com.yawl.http.client.ApacheHttpExecutor;
 import com.yawl.http.client.HttpClientInvocationHandler;
 import com.yawl.http.client.HttpExecutor;
-import com.yawl.util.BeanUtil;
-import com.yawl.util.ConstructorUtil;
-import com.yawl.util.ReflectionUtil;
-import com.yawl.util.StringUtils;
+import com.yawl.common.util.BeanUtil;
+import com.yawl.common.util.ConstructorUtil;
+import com.yawl.common.util.ReflectionUtil;
+import com.yawl.common.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,10 +30,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toSet;
 
 public class BeanCreationService {
     private static final Logger log = LoggerFactory.getLogger(BeanCreationService.class);
@@ -50,7 +51,7 @@ public class BeanCreationService {
                 .map(clazz -> clazz.getAnnotation(EnableHttpClients.class))
                 .flatMap(enableHttpClients -> Arrays.stream(enableHttpClients.value()))
                 .filter(client -> client.isAnnotationPresent(HttpClient.class))
-                .collect(collectingAndThen(Collectors.toSet(), this::createHttpClients));
+                .collect(collectingAndThen(toSet(), this::createHttpClients));
 
         //TODO: fix: check for circular dependencies
         //TODO: fix: even though more dynamic, Configuration annotated classes need to be defined first...
@@ -60,15 +61,27 @@ public class BeanCreationService {
         beans.forEach(this::initializeBean);
     }
 
+    public void findAndRegisterBeans(Class<?>... classes) {
+        findAndRegisterBeans(Set.of(classes));
+    }
+
     public void findAndRegisterBeans(Set<Class<?>> includes) {
+        //TODO: add recursion so more layers of imports are possible
+        var includesIncludingImports = new HashSet<>(includes);
         includes.stream()
+                .filter(include -> include.isAnnotationPresent(Import.class))
+                .map(include -> include.getAnnotation(Import.class).value())
+                .flatMap(Arrays::stream)
+                .forEach(includesIncludingImports::add);
+
+        includesIncludingImports.stream()
                 .filter(include -> include.isAnnotationPresent(HttpClient.class))
-                .collect(collectingAndThen(Collectors.toSet(), this::createHttpClients));
+                .collect(collectingAndThen(toSet(), this::createHttpClients));
 
         //TODO: fix: this is a bit of duplicated code from findAndRegisterBeans() so should be cleaned up
         var beans = new HashSet<BeanWrapper<?>>();
-        includes.stream().filter(include -> include.isAnnotationPresent(Configuration.class)).flatMap(this::createWrappersWithSupplier).forEach(beans::add);
-        includes.stream().filter(include -> !include.isAnnotationPresent(Configuration.class)).map(this::createWrapper).forEach(beans::add);
+        includesIncludingImports.stream().filter(include -> include.isAnnotationPresent(Configuration.class)).flatMap(this::createWrappersWithSupplier).forEach(beans::add);
+        includesIncludingImports.stream().filter(include -> !include.isAnnotationPresent(Configuration.class)).map(this::createWrapper).forEach(beans::add);
 
         beans.forEach(this::initializeBean);
     }
@@ -126,6 +139,10 @@ public class BeanCreationService {
      * @param enabledHttpClients a set of classes annotated with {@code com.yawl.annotations.HttpClient}
      */
     private HttpExecutor createHttpClients(Set<Class<?>> enabledHttpClients) {
+        if (enabledHttpClients.isEmpty()) {
+            return null;
+        }
+
         var httpExecutor = new ApacheHttpExecutor(applicationContext.getBeanByNameOrThrow(CommonBeans.JSON_MAPPER_NAME));
 
         for (Class<?> httpClientClass : enabledHttpClients) {

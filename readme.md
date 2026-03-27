@@ -9,13 +9,12 @@ However, while certain aspects may appear similar, all code has been written ind
 <dependency>
     <groupId>io.github.maximevdk</groupId>
     <artifactId>yawl</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
 </dependency>
 ```
 
 ### Building an executable jar
 ```xml
-
 <plugin>
     <artifactId>maven-assembly-plugin</artifactId>
     <version>3.7.1</version>
