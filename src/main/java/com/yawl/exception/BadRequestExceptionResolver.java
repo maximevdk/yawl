@@ -6,8 +6,7 @@ public class BadRequestExceptionResolver implements ExceptionResolver {
 
     @Override
     public HttpResponse<?> resolve(Throwable exception) {
-        if (exception instanceof MissingPathParameterException
-                || exception instanceof MissingRequiredParameterException) {
+        if (exception instanceof ClientException) {
             return HttpResponse.badRequest(exception.getMessage());
         }
 

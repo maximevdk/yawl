@@ -3,6 +3,7 @@ package com.yawl.util;
 import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
 import com.yawl.annotations.WebController;
+import com.yawl.common.util.BeanUtil;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

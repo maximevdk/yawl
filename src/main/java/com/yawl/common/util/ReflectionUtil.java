@@ -1,4 +1,4 @@
-package com.yawl.util;
+package com.yawl.common.util;
 
 import com.yawl.annotations.ExtendedBy;
 import com.yawl.exception.NotInitializedException;

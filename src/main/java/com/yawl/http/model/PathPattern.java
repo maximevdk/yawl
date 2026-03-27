@@ -1,6 +1,6 @@
 package com.yawl.http.model;
 
-import com.yawl.util.StringUtils;
+import com.yawl.common.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;

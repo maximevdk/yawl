@@ -1,21 +1,19 @@
 package com.yawl;
 
+import com.yawl.configuration.ApplicationProperties;
 import com.yawl.exception.InvalidContextException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.Set;
 
 public class ApplicationPropertiesInitializer {
+    private static final Set<String> CONFIG_FILE_NAMES = Set.of("application.yml", "application.yaml");
     private final YAMLMapper mapper;
 
     public ApplicationPropertiesInitializer(YAMLMapper mapper) {
@@ -56,10 +54,8 @@ public class ApplicationPropertiesInitializer {
 
     private String userConfigFileLocation() throws FileNotFoundException {
         var classLoader = Thread.currentThread().getContextClassLoader();
-        return classLoader.resources(".")
-                .map(url -> new File(url.getPath()))
-                .flatMap(file -> Optional.ofNullable(file.list()).stream().flatMap(Arrays::stream))
-                .filter(fileName -> fileName.matches("application\\.(yml|yaml)"))
+        return CONFIG_FILE_NAMES.stream()
+                .filter(name -> classLoader.getResource(name) != null)
                 .findFirst()
                 .orElseThrow(() -> new FileNotFoundException("No user defined application.yml file found"));
     }

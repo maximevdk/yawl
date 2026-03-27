@@ -1,11 +1,11 @@
 package com.yawl;
 
 import com.yawl.annotations.WebFilter;
-import com.yawl.beans.CommonBeans;
-import com.yawl.util.ApplicationContextUtils;
-import com.yawl.util.BeanUtil;
-import com.yawl.util.ConstructorUtil;
-import com.yawl.util.ReflectionUtil;
+import com.yawl.configuration.ApplicationProperties;
+import com.yawl.common.util.ApplicationContextUtils;
+import com.yawl.common.util.BeanUtil;
+import com.yawl.common.util.ConstructorUtil;
+import com.yawl.common.util.ReflectionUtil;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
 import jakarta.servlet.ServletContainerInitializer;
@@ -30,7 +30,7 @@ public class DefaultServletContainerInitializer implements ServletContainerIniti
 
         log.debug("Registering default servlets");
         var applicationContext = ApplicationContextUtils.getApplicationContext(context);
-        var properties = applicationContext.getBeanByNameOrThrow(CommonBeans.APPLICATION_PROPERTIES_NAME, ApplicationProperties.Application.class);
+        var properties = applicationContext.getBeanByTypeOrThrow(ApplicationProperties.Application.class);
 
         if (applicationContext.containsBeanOfType(ManagementServlet.class)) {
             var managementServlet = context.addServlet("managementServlet", applicationContext.getBeanByTypeOrThrow(ManagementServlet.class));

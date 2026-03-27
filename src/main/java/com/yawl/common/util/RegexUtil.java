@@ -1,4 +1,4 @@
-package com.yawl.util;
+package com.yawl.common.util;
 
 import javax.annotation.Nonnull;
 import java.util.regex.Pattern;

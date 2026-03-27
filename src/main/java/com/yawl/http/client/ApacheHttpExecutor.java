@@ -2,7 +2,7 @@ package com.yawl.http.client;
 
 import com.yawl.exception.HttpClientServerException;
 import com.yawl.http.model.HttpStatus;
-import com.yawl.util.StringUtils;
+import com.yawl.common.util.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;

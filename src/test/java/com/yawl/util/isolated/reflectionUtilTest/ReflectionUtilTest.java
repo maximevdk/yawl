@@ -4,7 +4,7 @@ import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
 import com.yawl.annotations.TypedBean;
 import com.yawl.annotations.WebController;
-import com.yawl.util.ReflectionUtil;
+import com.yawl.common.util.ReflectionUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

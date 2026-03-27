@@ -61,20 +61,19 @@ public sealed interface HttpResponse<T> permits HttpResponse.ErrorResponse, Http
         return new NoContent(status);
     }
 
-    static ErrorResponse.NotFound notFound(String description) {
+    static HttpResponse<String> notFound(String description) {
         return new ErrorResponse.NotFound(description);
     }
 
-    static ErrorResponse.Error internal() {
+    static HttpResponse<String> internal() {
         return new ErrorResponse.Error("An unexpected error has occurred");
     }
 
-    static ErrorResponse.Error internal(String description) {
+    static HttpResponse<String> internal(String description) {
         return new ErrorResponse.Error(description);
     }
 
-
-    static ErrorResponse.BadRequest badRequest(String reason) {
+    static HttpResponse<String> badRequest(String reason) {
         return new ErrorResponse.BadRequest(reason);
     }
 }

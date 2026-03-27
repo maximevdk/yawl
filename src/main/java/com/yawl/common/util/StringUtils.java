@@ -1,4 +1,4 @@
-package com.yawl.util;
+package com.yawl.common.util;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

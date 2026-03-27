@@ -6,9 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER})
-public @interface RequestHeader {
-    String name();
-
-    boolean required() default true;
+@Target({ElementType.TYPE})
+public @interface Import {
+    Class<?>[] value();
 }

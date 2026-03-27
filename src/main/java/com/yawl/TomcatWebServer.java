@@ -1,9 +1,9 @@
 package com.yawl;
 
 import com.yawl.beans.ApplicationContext;
-import com.yawl.beans.CommonBeans;
+import com.yawl.configuration.ApplicationProperties;
 import com.yawl.exception.InvalidContextException;
-import com.yawl.util.ApplicationContextUtils;
+import com.yawl.common.util.ApplicationContextUtils;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.connector.Connector;
@@ -31,7 +31,7 @@ public final class TomcatWebServer implements WebServer {
 
     @Override
     public void start(ApplicationContext applicationContext) {
-        var properties = applicationContext.getBeanByNameOrThrow(CommonBeans.APPLICATION_PROPERTIES_NAME, ApplicationProperties.Application.class);
+        var properties = applicationContext.getBeanByTypeOrThrow(ApplicationProperties.Application.class);
         var config = properties.web().config();
         tomcat.setPort(config.port());
 
