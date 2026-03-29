@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-@TypedBean
+@Discoverable
 public @interface WebController {
-    public String path() default "/";
+    String path() default "/";
 }

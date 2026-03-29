@@ -14,7 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class StringUtils {
-    private static final Map<Class<?>, Function<String, ?>> STRING_PARSER_FN = Map.of(
+    private static final Map<Type, Function<String, ?>> STRING_PARSER_FN = Map.of(
             int.class, Integer::parseInt,
             Integer.class, Integer::parseInt,
             Long.class, Long::parseLong,
@@ -67,11 +67,11 @@ public final class StringUtils {
             return null;
         }
 
-        return parse(String.join(",", values), (Class<T>) type);
+        return parse(String.join(",", values), type);
     }
 
 
-    private static <T> T parse(String value, Class<T> clazz) {
+    public static <T> T parse(String value, Type clazz) {
         if (value == null) {
             return null;
         }

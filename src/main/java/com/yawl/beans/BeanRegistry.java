@@ -90,8 +90,12 @@ final class BeanRegistry {
         return (List<T>) BEANS_BY_TYPE.getOrDefault(clazz, List.of());
     }
 
-    <T> boolean containsBeanOfType(Class<T> clazz) {
+    boolean containsBeanOfType(Class<?> clazz) {
         return !BEANS_BY_TYPE.getOrDefault(clazz, List.of()).isEmpty();
+    }
+
+    boolean containsBeanName(String name) {
+        return BEANS.get(name) != null;
     }
 
     <T> Optional<T> findBeanByType(Class<T> clazz) {

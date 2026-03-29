@@ -28,6 +28,10 @@ public class ApplicationContext {
         return registry.containsBeanOfType(clazz);
     }
 
+    public boolean containsBeanName(String name) {
+        return registry.containsBeanName(name);
+    }
+
     public void register(String name, Object bean) {
         if (bean == null) {
             throw new NullPointerException("Registered bean should not be null");
@@ -85,7 +89,7 @@ public class ApplicationContext {
             registerSuperClassAndInterfaces(bean, clazz);
         }
 
-        if (atClass.getSuperclass() != null && atClass.getSuperclass() != Object.class) {
+        if (atClass.getSuperclass() != null && (atClass.getSuperclass() != Object.class && atClass.getSuperclass() != Record.class)) {
             registry.registerBeanType(bean, atClass.getSuperclass());
             registerSuperClassAndInterfaces(bean, atClass.getSuperclass());
         }

@@ -19,7 +19,7 @@ public class RequestHeaderArgumentResolver implements HttpMethodArgumentResolver
         var requestHeader = parameter.getAnnotation(RequestHeader.class);
         var headerName = requestHeader.name() != null ? requestHeader.name() : parameter.getName();
 
-        var values = StringUtils.parse(new String[]{request.getHeader(headerName)}, parameter.getParameterizedType());
+        var values = StringUtils.parse(request.getHeader(headerName), parameter.getParameterizedType());
         if (values == null && requestHeader.required()) {
             throw MissingRequiredHeaderException.of(headerName);
         }

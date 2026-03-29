@@ -20,7 +20,7 @@ public class PathParamArgumentResolver implements HttpMethodArgumentResolver {
         var parameterName = pathParam.name() != null ? pathParam.name() : parameter.getName();
         var pathParams = route.extractVariables(request.getRequestURI());
 
-        var value = StringUtils.parse(new String[]{pathParams.get(parameterName)}, parameter.getParameterizedType());
+        var value = StringUtils.parse(pathParams.get(parameterName), parameter.getParameterizedType());
 
         if (value == null) {
             throw MissingPathParameterException.of(route, parameterName);

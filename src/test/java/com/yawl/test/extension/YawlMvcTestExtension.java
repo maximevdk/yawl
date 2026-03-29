@@ -15,6 +15,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 public class YawlMvcTestExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, TestInstancePostProcessor, AfterAllCallback {
     private static final String APPLICATION_CTX_KEY = "ctx";
@@ -22,15 +23,7 @@ public class YawlMvcTestExtension implements BeforeEachCallback, BeforeAllCallba
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
-        if (contextNotInitialized(context)) {
-            var yawlMvcTest = context.getRequiredTestClass().getAnnotation(YawlMvcTest.class);
-            var includes = new HashSet<Class<?>>(1);
-            includes.add(yawlMvcTest.controller());
-            includes.addAll(List.of(yawlMvcTest.imports()));
-
-            var ctx = new TestContext(context.getRequiredTestClass()).buildTestContext(includes, DEFAULT_CONFIG_LOCATION);
-            context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
-        }
+        getApplicationContext(context).orElseGet(() -> initialize(context));
     }
 
     @Override
@@ -55,15 +48,7 @@ public class YawlMvcTestExtension implements BeforeEachCallback, BeforeAllCallba
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        if (contextNotInitialized(context)) {
-            var yawlMvcTest = context.getRequiredTestClass().getAnnotation(YawlMvcTest.class);
-            var includes = new HashSet<Class<?>>(1);
-            includes.add(yawlMvcTest.controller());
-            includes.addAll(List.of(yawlMvcTest.imports()));
-
-            var ctx = new TestContext(context.getRequiredTestClass()).buildTestContext(includes, DEFAULT_CONFIG_LOCATION);
-            context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
-        }
+        getApplicationContext(context).orElseGet(() -> initialize(context));
     }
 
     private void setFieldValue(Object testInstance, Field field, Object value) {
@@ -75,8 +60,19 @@ public class YawlMvcTestExtension implements BeforeEachCallback, BeforeAllCallba
         }
     }
 
-    private boolean contextNotInitialized(ExtensionContext context) {
-        return context.getStore(ExtensionContext.Namespace.GLOBAL).get(APPLICATION_CTX_KEY) == null;
+    private Optional<ApplicationContext> getApplicationContext(ExtensionContext context) {
+        return Optional.ofNullable(context.getStore(ExtensionContext.Namespace.GLOBAL).get(APPLICATION_CTX_KEY, ApplicationContext.class));
+    }
+
+    private ApplicationContext initialize(ExtensionContext context) {
+        var yawlMvcTest = context.getRequiredTestClass().getAnnotation(YawlMvcTest.class);
+        var includes = new HashSet<Class<?>>(1);
+        includes.add(yawlMvcTest.controller());
+        includes.addAll(List.of(yawlMvcTest.imports()));
+
+        var ctx = new TestContext().buildTestContext(includes, DEFAULT_CONFIG_LOCATION);
+        context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
+        return ctx;
     }
 
     @Override

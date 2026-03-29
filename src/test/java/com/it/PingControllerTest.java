@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@YawlMvcTest(controller = PingController.class, imports = {RestClient.class, ApplicationConfiguration.class})
+@YawlMvcTest(controller = PingController.class, imports = {PingService.class, PingRepository.class, RestClient.class, ApplicationConfiguration.class})
 public class PingControllerTest {
     @Autowired
     private RestClient restClient;

@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @ExtendedBy(jakarta.servlet.annotation.WebFilter.class)
+@Discoverable
 public @interface WebFilter {
     String[] urlPatterns() default {"/*"};
 }

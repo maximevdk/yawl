@@ -1,9 +1,9 @@
 package com.yawl;
 
 import com.yawl.beans.ApplicationContext;
+import com.yawl.common.util.ApplicationContextUtils;
 import com.yawl.configuration.ApplicationProperties;
 import com.yawl.exception.InvalidContextException;
-import com.yawl.common.util.ApplicationContextUtils;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.connector.Connector;
@@ -58,18 +58,22 @@ public final class TomcatWebServer implements WebServer {
         tomcat.setConnector(connector);
 
         try {
-            log.info("Starting YAWL Application {} in {} on port {}", properties.name(), properties.basePath(), tomcat.getConnector().getLocalPort());
+            log.info("Starting YAWL Application {} in {}", properties.name(), properties.basePath());
 
             var beforeStartTime = System.currentTimeMillis();
             tomcat.start();
             var afterStartTime = System.currentTimeMillis();
-            log.info("Tomcat started on path {} took {} ms", tomcat.getServer().getCatalinaBase(), afterStartTime - beforeStartTime);
+            log.info("Tomcat started on port {} and path {} took {} ms", tomcat.getConnector().getLocalPort(), tomcat.getServer().getCatalinaBase(), afterStartTime - beforeStartTime);
         } catch (Exception ex) {
             log.error("Unable to launch Tomcat server", ex);
             throw new InvalidContextException("Unable to launch Tomcat", ex);
         }
 
         configureShutdownHook();
+
+        //start tomcat in a non daemon thread this results in the application not
+        // blocking on this line but advancing to the next line, returning the context
+        startNonDaemonAwaitThread(tomcat);
     }
 
     @Override
@@ -79,7 +83,7 @@ public final class TomcatWebServer implements WebServer {
             tomcat.destroy();
         } catch (LifecycleException ex) {
             //ignore
-            log.error("Error stopping Tomcat", ex);
+            log.warn("Error stopping Tomcat", ex);
         }
 
         try (var files = Files.walk(Paths.get(TOMCAT_DIRECTORY))) {
@@ -102,11 +106,18 @@ public final class TomcatWebServer implements WebServer {
         return tomcat.getConnector().getLocalPort();
     }
 
-    Tomcat getTomcat() {
-        return tomcat;
-    }
-
     private void configureShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
+    }
+
+    private static void startNonDaemonAwaitThread(Tomcat tomcat) {
+        var awaitThread = new Thread(() -> {
+            tomcat.getServer().await();
+        });
+        awaitThread.setContextClassLoader(ClassLoader.getSystemClassLoader());
+        awaitThread.setDaemon(false);  // non-daemon keeps JVM alive
+        awaitThread.setName("tomcat-non-deamon-thread");
+        awaitThread.setUncaughtExceptionHandler((_, ex) -> log.error("Uncaught error", ex));
+        awaitThread.start();
     }
 }

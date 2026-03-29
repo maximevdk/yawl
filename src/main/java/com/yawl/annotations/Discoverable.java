@@ -7,6 +7,5 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@ExtendedBy({Repository.class, Service.class, WebController.class})
-public @interface TypedBean {
+public @interface Discoverable {
 }
