@@ -1,17 +1,17 @@
 package com.yawl.util;
 
 import com.yawl.TestClass;
-import com.yawl.common.util.ConstructorUtil;
+import com.yawl.common.util.ReflectionUtil;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Parameter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ConstructorUtilTest {
+class ReflectionUtilTest {
     @Test
     void test() {
-        var result = ConstructorUtil.getRequiredConstructorParameters(TestClass.class);
+        var result = ReflectionUtil.getRequiredConstructorParameters(TestClass.class);
 
         assertThat(result).hasSize(4);
         assertThat(result)
@@ -21,7 +21,7 @@ class ConstructorUtilTest {
                 .extracting(Parameter::getName)
                 .containsExactly("var1", "var2", "var3", "var4");
 
-        var instance = ConstructorUtil.newInstance(TestClass.class, "test", 1, true, 1.0);
+        var instance = ReflectionUtil.newInstance(TestClass.class, "test", 1, true, 1.0);
         assertThat(instance).isNotEmpty();
     }
 }

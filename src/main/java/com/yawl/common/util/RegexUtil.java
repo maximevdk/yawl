@@ -1,6 +1,7 @@
 package com.yawl.common.util;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
+
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 

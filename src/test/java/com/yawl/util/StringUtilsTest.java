@@ -39,13 +39,13 @@ class StringUtilsTest {
         assertThat((List<String>) StringUtils.parse(new String[]{"a,b", "c"}, listType))
                 .containsExactly("a", "b", "c");
         assertThat((List<String>) StringUtils.parse(new String[]{}, listType)).isEmpty();
-        assertThat((List<String>) StringUtils.parse(null, listType)).isEmpty();
+        assertThat((List<String>) StringUtils.parse((String[]) null, listType)).isEmpty();
 
         assertThat((Set<Integer>) StringUtils.parse(new String[]{"1,2", "3"}, setType))
                 .containsExactlyInAnyOrder(1, 2, 3);
 
         assertThat((String) StringUtils.parse(new String[]{"hello"}, String.class)).isEqualTo("hello");
-        assertThat((String) StringUtils.parse(null, String.class)).isNull();
+        assertThat((String) StringUtils.parse((String) null, String.class)).isNull();
 
         var uuid = UUID.randomUUID();
         assertThat((UUID) StringUtils.parse(new String[]{uuid.toString()}, UUID.class)).isEqualTo(uuid);

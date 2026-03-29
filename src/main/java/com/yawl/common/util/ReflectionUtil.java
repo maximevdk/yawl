@@ -1,46 +1,19 @@
 package com.yawl.common.util;
 
-import com.yawl.annotations.ExtendedBy;
-import com.yawl.exception.NotInitializedException;
-import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-import org.reflections.util.FilterBuilder;
+import com.yawl.exception.NoAccessibleConstructorFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class ReflectionUtil {
     private static final Logger log = LoggerFactory.getLogger(ReflectionUtil.class);
-    private static Reflections reflections = null;
-
-    private ReflectionUtil() {
-    }
-
-    public static Set<Class<?>> getClassesAnnotatedWith(Class<? extends Annotation> annotationClass) {
-        if (notInitialized()) {
-            throw new NotInitializedException("Call ReflectionUtil.init() before using this method");
-        }
-
-        var annotations = new ArrayList<Class<? extends Annotation>>(List.of(annotationClass));
-
-        if (annotationClass.isAnnotationPresent(ExtendedBy.class)) {
-            annotations.addAll(List.of(annotationClass.getAnnotation(ExtendedBy.class).value()));
-        }
-
-        return annotations.stream()
-                .map(reflections::getTypesAnnotatedWith)
-                .flatMap(Set::stream)
-                .collect(Collectors.toSet());
-    }
 
     public static <T> Optional<T> invoke(Method method, Object instance, List<?> arguments) {
         try {
@@ -55,16 +28,40 @@ public final class ReflectionUtil {
         }
     }
 
-    public static void init(Class<?> baseClass) {
-        var config = new ConfigurationBuilder()
-                .setUrls(ClasspathHelper.forClass(baseClass))
-                .setScanners(Scanners.TypesAnnotated)
-                .filterInputsBy(new FilterBuilder().includePackage(baseClass.getPackageName()));
+    public static <T> Optional<T> newInstance(Class<T> clazz, Object... args) {
+        log.trace("Finding suitable constructor for class {}", (Object) clazz.getConstructors());
+        var constructor = Arrays.stream(clazz.getDeclaredConstructors())
+                .filter(c -> c.canAccess(null))
+                .filter(c -> c.getParameterCount() == args.length)
+                .findFirst().orElseThrow(() -> NoAccessibleConstructorFoundException.forClass(clazz));
 
-        reflections = new Reflections(config);
+        try {
+            return Optional.of((T) constructor.newInstance(args));
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
+            log.error("Unable to create instance of class {}", clazz, ex);
+            //ignore because it is our fault :grim:
+            return Optional.empty();
+        }
     }
 
-    public static boolean notInitialized() {
-        return reflections == null;
+    public static <T> Optional<T> newInstance(Constructor<T> constructor, List<?> args) {
+        try {
+            return Optional.of(constructor.newInstance(args.toArray()));
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
+            log.error("Unable to create instance of class {}", constructor.getDeclaringClass(), ex);
+            //ignore because it is our fault :grim:
+            return Optional.empty();
+        }
+    }
+
+    public static List<Parameter> getRequiredConstructorParameters(Class<?> clazz) {
+        // Reverse order
+        var constructor = Arrays.stream(clazz.getDeclaredConstructors())
+                .filter(c -> c.canAccess(null))
+                .min((c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount()))
+                .orElseThrow(() -> NoAccessibleConstructorFoundException.forClass(clazz));
+
+        log.trace("Found constructor with parameters {}", (Object) constructor.getParameterTypes());
+        return List.of(constructor.getParameters());
     }
 }

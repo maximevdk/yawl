@@ -1,6 +1,7 @@
 package com.yawl.http.model;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
+
 import java.util.List;
 import java.util.Map;
 

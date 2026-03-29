@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Optional;
 
 public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, TestInstancePostProcessor, AfterAllCallback {
     private static final String APPLICATION_CTX_KEY = "ctx";
@@ -23,10 +24,7 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
-        if (contextNotInitialized(context)) {
-            var ctx = YawlApplication.run(context.getRequiredTestClass(), DEFAULT_CONFIG_LOCATION);
-            context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
-        }
+        getContext(context).orElseGet(() -> initialize(context));
     }
 
     @Override
@@ -56,10 +54,7 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        if (contextNotInitialized(context)) {
-            var ctx = YawlApplication.run(context.getRequiredTestClass(), DEFAULT_CONFIG_LOCATION);
-            context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
-        }
+        getContext(context).orElseGet(() -> initialize(context));
     }
 
     private void setFieldValue(Object testInstance, Field field, Object value) {
@@ -71,18 +66,20 @@ public class YawlTestExtension implements BeforeEachCallback, BeforeAllCallback,
         }
     }
 
-    private boolean contextNotInitialized(ExtensionContext context) {
-        return context.getStore(ExtensionContext.Namespace.GLOBAL).get(APPLICATION_CTX_KEY) == null;
+    private Optional<ApplicationContext> getContext(ExtensionContext context) {
+        return Optional.ofNullable(context.getStore(ExtensionContext.Namespace.GLOBAL).get(APPLICATION_CTX_KEY, ApplicationContext.class));
+    }
+
+    private ApplicationContext initialize(ExtensionContext context) {
+        var ctx = YawlApplication.run(context.getRequiredTestClass(), DEFAULT_CONFIG_LOCATION);
+        context.getStore(ExtensionContext.Namespace.GLOBAL).put(APPLICATION_CTX_KEY, ctx);
+        return ctx;
     }
 
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
         var ctx = context.getStore(ExtensionContext.Namespace.GLOBAL).remove(APPLICATION_CTX_KEY, ApplicationContext.class);
         if (ctx != null) {
-            if (ctx.containsBeanOfType(WebServer.class)) {
-                ctx.getBeanByTypeOrThrow(WebServer.class).stop();
-            }
-
             ctx.clear();
         }
     }

@@ -1,6 +1,7 @@
 package com.yawl.http.model;
 
-import javax.annotation.Nonnull;
+
+import jakarta.annotation.Nonnull;
 
 public sealed interface PathSegment permits PathSegment.Capture, PathSegment.Literal {
     boolean matches(String path);

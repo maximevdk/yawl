@@ -22,10 +22,6 @@ public final class EventRegistry implements EventPublisher, EventListenerRegistr
                 .forEach(listener -> ((Consumer<Event>) listener).accept(event));
     }
 
-    public <E extends Event> void register(Class<E> eventType, Consumer<E> listener) {
-        listeners.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>()).add(listener);
-    }
-
     @Override
     public void registerListeners(Object bean) {
         for (Method method : bean.getClass().getDeclaredMethods()) {
@@ -50,5 +46,9 @@ public final class EventRegistry implements EventPublisher, EventListenerRegistr
                 });
             }
         }
+    }
+
+    private <E extends Event> void register(Class<E> eventType, Consumer<E> listener) {
+        listeners.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>()).add(listener);
     }
 }
