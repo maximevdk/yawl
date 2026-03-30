@@ -1,6 +1,5 @@
-package com.yawl.util;
+package com.yawl.common.util;
 
-import com.yawl.common.util.StringUtils;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
