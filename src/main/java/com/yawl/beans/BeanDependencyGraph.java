@@ -42,6 +42,8 @@ public class BeanDependencyGraph {
 
     private void addBeanToGraph(BeanDefinition<?> definition) {
         beanDefinitionByName.put(definition.name(), definition);
+
+        //TODO: like app context is should be good to also add the interface or super class
         beanDefinitionByClass.compute(definition.type(), (_, value) -> {
             if (value == null) {
                 value = new ArrayList<>();
