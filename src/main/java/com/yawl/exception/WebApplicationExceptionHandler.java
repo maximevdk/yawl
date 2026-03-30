@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class WebApplicationExceptionHandler {
-    private static final String DEFAULT_ERROR_MESSAGE = "Internal server error";
+    private static final String DEFAULT_ERROR_MESSAGE = "Something went wrong";
     private final List<ExceptionResolver> resolvers;
 
     public WebApplicationExceptionHandler(List<ExceptionResolver> resolvers) {

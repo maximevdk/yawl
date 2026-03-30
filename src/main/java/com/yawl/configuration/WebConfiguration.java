@@ -2,7 +2,7 @@ package com.yawl.configuration;
 
 import com.yawl.annotations.Bean;
 import com.yawl.annotations.Configuration;
-import com.yawl.beans.CommonBeans;
+import com.yawl.beans.model.CommonBeans;
 import com.yawl.common.JsonHttpResponseWriter;
 import com.yawl.common.TextPlainResponseWriter;
 import com.yawl.exception.BadRequestExceptionResolver;

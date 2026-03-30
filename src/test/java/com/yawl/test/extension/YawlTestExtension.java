@@ -4,7 +4,7 @@ import com.yawl.WebServer;
 import com.yawl.YawlApplication;
 import com.yawl.annotations.Autowired;
 import com.yawl.beans.ApplicationContext;
-import com.yawl.beans.CommonBeans;
+import com.yawl.beans.model.CommonBeans;
 import com.yawl.test.annotation.LocalTestPort;
 import com.yawl.test.annotation.YawlTest;
 import org.junit.jupiter.api.extension.AfterAllCallback;

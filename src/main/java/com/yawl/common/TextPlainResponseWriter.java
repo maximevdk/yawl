@@ -20,14 +20,15 @@ public class TextPlainResponseWriter implements HttpResponseWriter {
 
     @Override
     public void write(HttpResponse<?> response, HttpServletResponse httpServletResponse) throws IOException {
-        httpServletResponse.setCharacterEncoding(StandardCharsets.UTF_8);
-        httpServletResponse.setContentType(CONTENT_TYPE.value());
-
+        //TODO: right now we return the toString of an object, but that should maybe be avoided and return an error instead?
         httpServletResponse.setCharacterEncoding(CHARSET);
         httpServletResponse.setContentType(CONTENT_TYPE.value());
 
+        var body = StringUtils.toString(response.body()).getBytes(CHARSET);
         var outputStream = httpServletResponse.getOutputStream();
-        outputStream.write(StringUtils.toString(response).getBytes(CHARSET));
+
+        httpServletResponse.setContentLength(body.length);
+        outputStream.write(body);
         outputStream.flush();
         outputStream.close();
     }

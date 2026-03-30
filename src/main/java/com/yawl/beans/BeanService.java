@@ -17,10 +17,10 @@ public class BeanService {
     private final BeanDependencyGraph graph;
     private final BeanDiscoveryService beanDiscoveryService;
 
-    public BeanService(ApplicationContext ctx, EventListenerRegistrar eventRegistry) {
+    public BeanService(ApplicationContext ctx) {
         this.ctx = ctx;
-        this.eventRegistry = eventRegistry;
-        this.graph = new BeanDependencyGraph();
+        this.eventRegistry = ctx.getBeanByTypeOrThrow(EventListenerRegistrar.class);
+        this.graph = new BeanDependencyGraph(ctx);
         this.beanDiscoveryService = new BeanDiscoveryService();
     }
 

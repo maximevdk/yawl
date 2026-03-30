@@ -5,6 +5,7 @@ import com.yawl.test.annotation.YawlMvcTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -36,6 +37,12 @@ public class PingControllerTest {
 
         assertNotNull(result);
         assertEquals(pong, result);
+    }
+
+    @Test
+    void getPong_query_notFound() {
+        var result = restClient.getByQuery(UUID.randomUUID().toString());
+        assertNull(result);
     }
 
     @Test

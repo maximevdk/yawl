@@ -6,9 +6,9 @@ import com.yawl.annotations.RequestHeader;
 
 import java.lang.reflect.Parameter;
 
-class TestClass {
+class ParameterMock {
     public static Parameter parameter(String name) throws NoSuchMethodException {
-        return TestClass.class.getMethod(name, String.class).getParameters()[0];
+        return ParameterMock.class.getMethod(name, String.class).getParameters()[0];
     }
 
     public void parameterWithHeader(@RequestHeader(name = "test-header", required = false) String header) {
