@@ -29,6 +29,33 @@ class ApplicationContextTest {
     }
 
     @Test
+    void register_nullBean_throws() {
+        var ctx = new ApplicationContext();
+        assertThrows(IllegalArgumentException.class, () -> ctx.register("test", null));
+        assertThrows(IllegalArgumentException.class, () -> ctx.register("test", null, Object.class));
+    }
+
+    @Test
+    void register_nullName_throws() {
+        var ctx = new ApplicationContext();
+        assertThrows(IllegalArgumentException.class, () -> ctx.register(null, "Test1"));
+        assertThrows(IllegalArgumentException.class, () -> ctx.register(null, "test2", String.class));
+    }
+    @Test
+    void register_nullType_throws() {
+        var ctx = new ApplicationContext();
+        assertThrows(IllegalArgumentException.class, () -> ctx.register("test bean", "tes   t2", null));
+    }
+
+    @Test
+    void getBeanByNameOrThrow() {
+        var ctx = new ApplicationContext();
+        ctx.register("service1", new Bean1());
+
+        assertThat((Bean1) ctx.getBeanByNameOrThrow("service1")).isNotNull();
+    }
+
+    @Test
     void getBeansAnnotatedWith() {
         var ctx = new ApplicationContext();
         ctx.register("service1", new Bean1());

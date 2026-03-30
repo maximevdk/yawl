@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static com.yawl.http.TestClass.parameter;
+import static com.yawl.http.ParameterMock.parameter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

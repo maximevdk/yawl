@@ -7,7 +7,7 @@ import com.yawl.http.model.PathPattern;
 import com.yawl.http.model.Route;
 import org.junit.jupiter.api.Test;
 
-import static com.yawl.http.TestClass.parameter;
+import static com.yawl.http.ParameterMock.parameter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

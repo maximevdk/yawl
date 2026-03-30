@@ -1,5 +1,8 @@
 package com.yawl;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class TestClass {
     private String var1;
     private int var2;
@@ -19,5 +22,15 @@ public class TestClass {
         this.var2 = var2;
         this.var3 = var3;
         this.var4 = var4;
+    }
+
+    @Override
+    public String toString() {
+        return "TestClass{" +
+                "var1='" + var1 + '\'' +
+                ", var2=" + var2 +
+                ", var3=" + var3 +
+                ", var4=" + var4 +
+                '}';
     }
 }

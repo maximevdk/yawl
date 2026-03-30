@@ -2,7 +2,7 @@ package com.yawl.configuration;
 
 import com.yawl.annotations.Bean;
 import com.yawl.annotations.Configuration;
-import com.yawl.beans.CommonBeans;
+import com.yawl.beans.model.CommonBeans;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.dataformat.yaml.YAMLMapper;

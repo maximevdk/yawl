@@ -34,11 +34,11 @@ public class ApplicationContext {
 
     public void register(String name, Object bean) {
         if (bean == null) {
-            throw new NullPointerException("Registered bean should not be null");
+            throw new IllegalArgumentException("Registered bean should not be null");
         }
 
         if (name == null) {
-            throw new NullPointerException("Registered bean name should not be null");
+            throw new IllegalArgumentException("Registered bean name should not be null");
         }
 
         //register bean for its own class
@@ -49,15 +49,15 @@ public class ApplicationContext {
 
     public void register(String name, Object bean, Class<?> clazz) {
         if (bean == null) {
-            throw new NullPointerException("Registered bean should not be null");
+            throw new IllegalArgumentException("Registered bean should not be null");
         }
 
         if (name == null) {
-            throw new NullPointerException("Registered bean name should not be null");
+            throw new IllegalArgumentException("Registered bean name should not be null");
         }
 
         if (clazz == null) {
-            throw new NullPointerException("Registered bean type should not be null");
+            throw new IllegalArgumentException("Registered bean type should not be null");
         }
 
         registry.registerBean(name, bean, clazz);

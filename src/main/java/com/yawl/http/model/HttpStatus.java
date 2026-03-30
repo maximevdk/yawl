@@ -12,6 +12,7 @@ public enum HttpStatus {
     NO_CONTENT(HttpServletResponse.SC_NO_CONTENT, Series.SUCCESSFUL),
     BAD_REQUEST(HttpServletResponse.SC_BAD_REQUEST, Series.CLIENT_ERROR),
     NOT_FOUND(HttpServletResponse.SC_NOT_FOUND, Series.CLIENT_ERROR),
+    NOT_ACCEPTABLE(HttpServletResponse.SC_NOT_ACCEPTABLE, Series.CLIENT_ERROR),
     ERROR(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Series.SERVER_ERROR),
     STARTING(HttpServletResponse.SC_SERVICE_UNAVAILABLE, Series.SERVER_ERROR);
 
