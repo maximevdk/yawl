@@ -16,8 +16,7 @@ public class BeanDependencyGraph {
     private final Map<String, BeanDefinition<?>> beanDefinitionByName = new HashMap<>();
 
     public BeanDependencyGraph(ApplicationContext ctx) {
-        ctx.beansByName()
-                .entrySet()
+        ctx.beansByName().entrySet()
                 .stream()
                 .map(entry -> new BeanDefinition<>(entry.getKey(), entry.getValue()))
                 .forEach(this::addBeanToGraph);

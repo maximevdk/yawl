@@ -1,7 +1,6 @@
-package com.yawl.util;
+package com.yawl.common.util;
 
 import com.yawl.TestClass;
-import com.yawl.common.util.ReflectionUtil;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Parameter;
