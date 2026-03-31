@@ -9,12 +9,20 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.lang.reflect.Parameter;
 
+/**
+ * Resolves handler method parameters annotated with {@link com.yawl.annotations.RequestBody} by deserializing the request body.
+ */
 public class RequestBodyArgumentResolver implements HttpMethodArgumentResolver {
     private static final Logger log = LoggerFactory.getLogger(RequestBodyArgumentResolver.class);
 
     //TODO: body can be more than just JSON, like XML or anything else, we should allow for a reader instead of limiting us to jsonMapper
     private final JsonMapper jsonMapper;
 
+    /**
+     * Creates a new resolver with the given JSON mapper.
+     *
+     * @param jsonMapper the mapper used to deserialize request bodies
+     */
     public RequestBodyArgumentResolver(JsonMapper jsonMapper) {
         this.jsonMapper = jsonMapper;
     }

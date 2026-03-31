@@ -12,6 +12,12 @@ import tools.jackson.databind.json.JsonMapper;
 @Configuration
 public class HttpConfiguration {
 
+    /**
+     * Creates the default {@link HttpExecutor} bean backed by Apache HttpClient.
+     *
+     * @param jsonMapper the JSON mapper for serialization
+     * @return a new Apache HTTP executor
+     */
     @Bean
     public HttpExecutor apacheHttpExecutor(@Qualifier(CommonBeans.JSON_MAPPER_NAME) JsonMapper jsonMapper) {
         return new ApacheHttpExecutor(jsonMapper);

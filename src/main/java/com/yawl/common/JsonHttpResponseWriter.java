@@ -8,10 +8,18 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * {@link HttpResponseWriter} that serializes HTTP responses as JSON using Jackson.
+ */
 public class JsonHttpResponseWriter implements HttpResponseWriter {
     private static final ContentType CONTENT_TYPE = ContentType.APPLICATION_JSON;
     private final JsonMapper jsonMapper;
 
+    /**
+     * Creates a new writer with the given JSON mapper.
+     *
+     * @param jsonMapper the JSON mapper for serialization
+     */
     public JsonHttpResponseWriter(JsonMapper jsonMapper) {
         this.jsonMapper = jsonMapper;
     }

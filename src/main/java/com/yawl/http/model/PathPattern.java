@@ -9,8 +9,19 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Represents a parsed URL path pattern composed of literal and capture segments.
+ *
+ * @param segments the ordered list of path segments
+ */
 public record PathPattern(List<PathSegment> segments) {
 
+    /**
+     * Parses a path string into a {@code PathPattern}.
+     *
+     * @param path the path string to parse
+     * @return the parsed path pattern
+     */
     public static PathPattern parse(String path) {
         return splitInSegments(path)
                 .map(segment -> {
@@ -23,6 +34,12 @@ public record PathPattern(List<PathSegment> segments) {
                 .collect(Collectors.collectingAndThen(Collectors.toList(), PathPattern::new));
     }
 
+    /**
+     * Returns whether the given request path matches this pattern.
+     *
+     * @param requestPath the request path to match
+     * @return {@code true} if the path matches
+     */
     public boolean matches(String requestPath) {
         // split requestPath into segments
         var requestPathSplit = splitInSegments(requestPath).toList();
@@ -74,6 +91,11 @@ public record PathPattern(List<PathSegment> segments) {
         return pathVariables;
     }
 
+    /**
+     * Returns the names of all capture segments in this pattern.
+     *
+     * @return a list of capture variable names
+     */
     public List<String> captureNames() {
         return segments.stream()
                 .filter(segment -> segment instanceof PathSegment.Capture)
@@ -82,6 +104,11 @@ public record PathPattern(List<PathSegment> segments) {
                 .toList();
     }
 
+    /**
+     * Returns the number of literal segments in this pattern.
+     *
+     * @return the literal segment count
+     */
     public int literalCount() {
         return (int) segments.stream()
                 .filter(segment -> segment instanceof PathSegment.Literal)

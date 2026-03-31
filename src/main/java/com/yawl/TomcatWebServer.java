@@ -3,7 +3,6 @@ package com.yawl;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.common.util.ApplicationContextUtils;
 import com.yawl.configuration.ApplicationProperties;
-import com.yawl.exception.InvalidContextException;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.connector.Connector;
@@ -19,6 +18,9 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Set;
 
+/**
+ * {@link WebServer} implementation backed by an embedded Apache Tomcat server.
+ */
 public final class TomcatWebServer implements WebServer {
     private static final Logger log = LoggerFactory.getLogger(TomcatWebServer.class);
     private static final String TOMCAT_DIRECTORY = "./target/temp";
@@ -66,7 +68,7 @@ public final class TomcatWebServer implements WebServer {
             log.info("Tomcat started on port {} and path {} took {} ms", tomcat.getConnector().getLocalPort(), tomcat.getServer().getCatalinaBase(), afterStartTime - beforeStartTime);
         } catch (Exception ex) {
             log.error("Unable to launch Tomcat server", ex);
-            throw new InvalidContextException("Unable to launch Tomcat", ex);
+            throw new RuntimeException("Unable to launch Tomcat", ex);
         }
 
         configureShutdownHook();

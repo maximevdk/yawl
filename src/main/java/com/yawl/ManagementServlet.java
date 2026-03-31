@@ -25,6 +25,9 @@ import java.util.Map;
 import java.util.function.DoubleFunction;
 import java.util.function.LongFunction;
 
+/**
+ * Servlet that exposes management endpoints for health monitoring and debugging.
+ */
 public class ManagementServlet extends HttpServlet {
     private static final LongFunction<Long> TO_MB_FN = in -> in / (1024 * 1024);
     private static final DoubleFunction<Double> TO_PERCENT_FN = in -> in * 100;
@@ -35,14 +38,25 @@ public class ManagementServlet extends HttpServlet {
     private JsonMapper mapper;
     private ApplicationProperties.Application properties;
 
+    /**
+     * Listens to ApplicationEvent.RouteRegistryInitialized event and records registered routes for the debug endpoint.
+     *
+     * @param event the route registry initialized event
+     */
     @EventListener
     public void on(ApplicationEvent.RouteRegistryInitialized event) {
         event.routes().stream()
                 .forEach(route -> routes.put(route.route(), route.method().getDeclaringClass()));
     }
 
+    /**
+     * Listens to ApplicationEvent.ApplicationContextRefreshed events and records registered beans for the debug endpoint.
+     *
+     * @param event the application context refreshed event
+     */
     @EventListener
     public void on(ApplicationEvent.ApplicationContextRefreshed event) {
+        beans.clear();
         beans.putAll(event.applicationContext().beansByName());
     }
 

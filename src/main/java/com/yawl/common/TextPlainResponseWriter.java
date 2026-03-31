@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * {@link HttpResponseWriter} that writes HTTP responses as plain text.
+ */
 public class TextPlainResponseWriter implements HttpResponseWriter {
     private static final ContentType CONTENT_TYPE = ContentType.TEXT_PLAIN;
     private static final Charset CHARSET = StandardCharsets.UTF_8;

@@ -11,6 +11,9 @@ import com.yawl.http.client.HttpExecutor;
 import java.lang.reflect.Proxy;
 import java.util.Set;
 
+/**
+ * Orchestrates bean discovery, dependency graph validation and bean instantiation into the {@link ApplicationContext}.
+ */
 public class BeanService {
     private final ApplicationContext ctx;
     private final EventListenerRegistrar eventRegistry;
@@ -24,18 +27,33 @@ public class BeanService {
         this.beanDiscoveryService = new BeanDiscoveryService();
     }
 
+    /**
+     * Discovers and initializes beans declared in the given configuration class.
+     *
+     * @param configClass the configuration class to process
+     */
     public void loadAndInitializeConfig(Class<?> configClass) {
         var definitions = beanDiscoveryService.discoverFromConfigClass(configClass);
         graph.validate(definitions);
         definitions.forEach(this::lookupOrInitiate);
     }
 
+    /**
+     * Scans the package of the given base class and initializes all discoverable beans.
+     *
+     * @param baseClass the class whose package is used as the scan root
+     */
     public void loadAndInitializeBeans(Class<?> baseClass) {
-        var definitions = beanDiscoveryService.discoverAll(baseClass);
+        var definitions = beanDiscoveryService.discoverAll(baseClass.getPackage());
         graph.validate(definitions);
         definitions.forEach(this::lookupOrInitiate);
     }
 
+    /**
+     * Discovers and initializes beans from an explicit set of classes.
+     *
+     * @param classes the classes to inspect and instantiate
+     */
     public void loadAndInitializeBeans(Set<Class<?>> classes) {
         var definitions = beanDiscoveryService.discoverSet(classes);
         graph.validate(definitions);

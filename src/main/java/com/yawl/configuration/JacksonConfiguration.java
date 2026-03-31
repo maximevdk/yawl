@@ -9,7 +9,14 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 
 @Configuration
 public final class JacksonConfiguration {
+    /** Creates a new instance. */
+    public JacksonConfiguration() {}
 
+    /**
+     * Creates the YAML mapper bean configured with kebab-case naming strategy.
+     *
+     * @return a new YAML mapper
+     */
     @Bean(name = CommonBeans.YAML_MAPPER_NAME)
     public YAMLMapper yamlMapper() {
         return YAMLMapper.builder()
@@ -17,6 +24,11 @@ public final class JacksonConfiguration {
                 .build();
     }
 
+    /**
+     * Creates the JSON mapper bean.
+     *
+     * @return a new JSON mapper
+     */
     @Bean(name = CommonBeans.JSON_MAPPER_NAME)
     public JsonMapper jsonMapper() {
         return JsonMapper.builder().build();

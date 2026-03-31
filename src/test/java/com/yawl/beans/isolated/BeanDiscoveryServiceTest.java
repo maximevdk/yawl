@@ -1,4 +1,4 @@
-package com.yawl.beans.discovery;
+package com.yawl.beans.isolated;
 
 import com.yawl.annotations.Bean;
 import com.yawl.annotations.Configuration;
@@ -21,7 +21,7 @@ class BeanDiscoveryServiceTest {
 
     @Test
     void discoverAll() {
-        var result = service.discoverAll(getClass());
+        var result = service.discoverAll(getClass().getPackage());
         assertThat(result).hasSize(7);
         assertThat(result).extracting(BeanDefinition::type)
                 .map(Class::getName)

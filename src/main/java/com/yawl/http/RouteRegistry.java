@@ -28,6 +28,11 @@ public class RouteRegistry {
     private static final Logger log = LoggerFactory.getLogger(RouteRegistry.class);
     private final Map<Route, RegisteredRoute> destinations = new HashMap<>();
 
+    /**
+     * Initializes the registry by scanning all {@link com.yawl.annotations.WebController}-annotated beans for route mappings.
+     *
+     * @param applicationContext the application context containing controller beans
+     */
     public void init(ApplicationContext applicationContext) {
         var controllers = applicationContext.getBeansAnnotatedWith(WebController.class);
 
@@ -61,6 +66,13 @@ public class RouteRegistry {
         }
     }
 
+    /**
+     * Finds the registered route matching the given HTTP method and request path.
+     *
+     * @param method the HTTP method name
+     * @param path   the request path
+     * @return the matching registered route, or empty if none matches
+     */
     public Optional<RegisteredRoute> find(String method, String path) {
         var httpMethod = HttpMethod.valueOf(method);
 
@@ -73,6 +85,11 @@ public class RouteRegistry {
                 .map(Map.Entry::getValue);
     }
 
+    /**
+     * Returns an unmodifiable copy of all registered routes.
+     *
+     * @return the list of registered routes
+     */
     public List<RegisteredRoute> getRoutes() {
         return List.copyOf(destinations.values());
     }
