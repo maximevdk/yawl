@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 public class QueryParamArgumentResolver implements HttpMethodArgumentResolver {
     @Override
@@ -21,8 +22,9 @@ public class QueryParamArgumentResolver implements HttpMethodArgumentResolver {
         var queryParam = parameter.getAnnotation(QueryParam.class);
         var parameterName = queryParam.name() != null ? queryParam.name() : parameter.getName();
 
-        var values = Arrays.stream(request.getParameterValues(parameterName))
-                .filter(Objects::nonNull)
+        var values = Optional.ofNullable(request.getParameterValues(parameterName))
+                .stream()
+                .flatMap(Arrays::stream)
                 .filter(StringUtils::hasText)
                 .toArray(String[]::new);
         var value = StringUtils.parse(values, parameter.getParameterizedType());
