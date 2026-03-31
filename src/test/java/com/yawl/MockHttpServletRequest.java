@@ -270,7 +270,11 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String[] getParameterValues(String name) {
-        return Collections.singletonList(parameters.get(name)).toArray(new String[1]);
+        if (parameters.containsKey(name)) {
+            return Collections.singletonList(parameters.get(name)).toArray(new String[1]);
+        }
+
+        return null;
     }
 
     @Override

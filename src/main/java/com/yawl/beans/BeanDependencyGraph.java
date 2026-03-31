@@ -56,6 +56,7 @@ class BeanDependencyGraph {
 
 
     BeanDefinition getDefinitionByNameAndOrType(String name, Class<?> type) {
+        //TODO: consider if when the item isn't found by name it to be a configuration error
         if (beanDefinitionByName.containsKey(name)) {
             var definition = beanDefinitionByName.get(name);
 
