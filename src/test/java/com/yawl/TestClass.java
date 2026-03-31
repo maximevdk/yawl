@@ -7,7 +7,7 @@ public class TestClass {
     private String var1;
     private int var2;
     private boolean var3;
-    private Double var4;
+    private double var4;
 
     public TestClass() {
     }
@@ -17,11 +17,15 @@ public class TestClass {
         this.var2 = var2;
     }
 
-    public TestClass(String var1, int var2, boolean var3, Double var4) {
+    public TestClass(String var1, int var2, boolean var3, double var4) {
         this.var1 = var1;
         this.var2 = var2;
         this.var3 = var3;
         this.var4 = var4;
+    }
+
+    public void doTheDo() {
+        // do some do
     }
 
     @Override

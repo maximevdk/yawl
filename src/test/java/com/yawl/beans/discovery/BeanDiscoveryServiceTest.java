@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BeanDiscoveryServiceTest {
     private final BeanDiscoveryService service = new BeanDiscoveryService();
@@ -21,10 +22,10 @@ class BeanDiscoveryServiceTest {
     @Test
     void discoverAll() {
         var result = service.discoverAll(getClass());
-        assertThat(result).hasSize(6);
+        assertThat(result).hasSize(7);
         assertThat(result).extracting(BeanDefinition::type)
                 .map(Class::getName)
-                .containsExactlyInAnyOrder(Test1.class.getName(), Test2.class.getName(), Test3.class.getName(), Test4.class.getName(), Test5.class.getName(), Test7.class.getName());
+                .containsExactlyInAnyOrder(Test1.class.getName(), Test2.class.getName(), Test3.class.getName(), Test4.class.getName(), Test5.class.getName(), Test6.class.getName(), Test7.class.getName());
 
         var test3 = result.stream()
                 .filter(definition -> definition.type() == Test3.class)
@@ -40,12 +41,13 @@ class BeanDiscoveryServiceTest {
 
     @Test
     void discoverSet() {
-        var result = service.discoverSet(Set.of(Test1.class, Test2.class, Test3.class, Test4.class, Test5.class, Test6.class, Test7.class));
+        var input = Set.of(Test1.class, Test2.class, Test3.class, Test4.class, Test5.class, Test6.class);
+        var result = service.discoverSet(input);
 
-        assertThat(result).hasSize(6);
+        assertThat(result).hasSize(7);
         assertThat(result).extracting(BeanDefinition::type)
                 .map(Class::getName)
-                .containsExactlyInAnyOrder(Test1.class.getName(), Test2.class.getName(), Test3.class.getName(), Test4.class.getName(), Test5.class.getName(), Test7.class.getName());
+                .containsExactlyInAnyOrder(Test1.class.getName(), Test2.class.getName(), Test3.class.getName(), Test4.class.getName(), Test5.class.getName(), Test6.class.getName(), Test7.class.getName());
 
         var test3 = result.stream()
                 .filter(definition -> definition.type() == Test3.class)
@@ -57,6 +59,23 @@ class BeanDiscoveryServiceTest {
 
         assertThat(test3.dependencies()).hasSize(3);
         assertThat(test7.beanCreationMethod()).isNotNull();
+    }
+
+    @Test
+    void discoverFromConfigClass_notAConfigClass_throws() {
+        assertThatThrownBy(() -> service.discoverFromConfigClass(Test2.class))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No config class provided");
+    }
+
+    @Test
+    void discoverFromConfigClass_configClass_discoversMethodsAndConfigClass() {
+        var result = service.discoverFromConfigClass(Test6.class);
+        assertThat(result)
+                .hasSize(2)
+                .extracting(BeanDefinition::type)
+                .extracting(Class::getName)
+                .containsExactlyInAnyOrder(Test6.class.getName(), Test7.class.getName());
     }
 
     @Repository(name = "repo")

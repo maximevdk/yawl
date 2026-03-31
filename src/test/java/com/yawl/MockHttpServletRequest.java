@@ -19,9 +19,9 @@ import jakarta.servlet.http.Part;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.security.Principal;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -35,11 +35,16 @@ public class MockHttpServletRequest implements HttpServletRequest {
     private Map<String, String> parameters;
     private String requestUri;
     private HttpMethod method;
+    private String body;
 
     public MockHttpServletRequest() {
         this.headers = new HashMap<>();
         this.parameters = new HashMap<>();
         this.requestUri = "";
+    }
+
+    public void setBody(String body) {
+        this.body = body;
     }
 
     public void setHeaders(Map<String, String> headers) {
@@ -295,7 +300,11 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     @Override
     public BufferedReader getReader() throws IOException {
-        return null;
+        if (body == null) {
+            return new BufferedReader(new StringReader(""));
+        }
+
+        return new BufferedReader(new StringReader(body));
     }
 
     @Override

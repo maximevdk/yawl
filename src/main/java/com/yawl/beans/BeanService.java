@@ -42,18 +42,18 @@ public class BeanService {
         definitions.forEach(this::lookupOrInitiate);
     }
 
-    private <T> T lookupOrInitiate(BeanDefinition<T> definition) {
+    private <T> T lookupOrInitiate(BeanDefinition definition) {
         if (ctx.containsBeanName(definition.name())) {
-            return ctx.getBeanByNameOrThrow(definition.name(), definition.type());
+            return (T) ctx.getBeanByNameOrThrow(definition.name(), definition.type());
         }
 
         var dependencies = definition.dependencies().stream()
-                .map(parameter -> graph.getDefinitionByType(parameter.getType()))
+                .map(parameter -> graph.getDefinitionByNameAndOrType(parameter.name(), parameter.type()))
                 .map(this::lookupOrInitiate)
                 .toList();
 
         if (definition.beanCreationMethod() != null) {
-            var instance = ReflectionUtil.newInstance(definition.beanCreationMethod().getDeclaringClass()).orElseThrow();
+            var instance = lookupOrInitiate(graph.getDefinitionByType(definition.beanCreationMethod().getDeclaringClass()));
             var bean = (T) ReflectionUtil.invoke(definition.beanCreationMethod(), instance, dependencies)
                     .orElseThrow(() -> UnableToInitializeBeanException.forClass(definition.beanCreationMethod().getReturnType()));
             ctx.register(definition.name(), bean);
@@ -68,7 +68,7 @@ public class BeanService {
                         new Class[]{definition.type()},
                         new HttpClientInvocationHandler(lookupOrInitiate(graph.getDefinitionByType(HttpExecutor.class)))
                 );
-                ctx.register(definition.name(), bean);
+                ctx.register(definition.name(), bean, definition.type());
                 eventRegistry.registerListeners(bean);
                 return bean;
             }
@@ -79,6 +79,6 @@ public class BeanService {
         var bean = ReflectionUtil.newInstance(definition.type(), dependencies.toArray()).orElseThrow();
         ctx.register(definition.name(), bean);
         eventRegistry.registerListeners(bean);
-        return bean;
+        return (T) bean;
     }
 }

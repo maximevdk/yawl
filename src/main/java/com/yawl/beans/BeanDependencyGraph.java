@@ -4,26 +4,25 @@ import com.yawl.beans.model.BeanDefinition;
 import com.yawl.exception.DuplicateBeanException;
 import com.yawl.exception.NoSuchBeanException;
 
-import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BeanDependencyGraph {
-    private final Map<Class<?>, List<BeanDefinition<?>>> beanDefinitionByClass = new HashMap<>();
-    private final Map<String, BeanDefinition<?>> beanDefinitionByName = new HashMap<>();
+class BeanDependencyGraph {
+    private final Map<Class<?>, List<BeanDefinition>> beanDefinitionByClass = new HashMap<>();
+    private final Map<String, BeanDefinition> beanDefinitionByName = new HashMap<>();
 
-    public BeanDependencyGraph(ApplicationContext ctx) {
+    BeanDependencyGraph(ApplicationContext ctx) {
         ctx.beansByName().entrySet()
                 .stream()
-                .map(entry -> new BeanDefinition<>(entry.getKey(), entry.getValue()))
+                .map(entry -> new BeanDefinition(entry.getKey(), entry.getValue()))
                 .forEach(this::addBeanToGraph);
     }
 
-    public void validate(Set<BeanDefinition<?>> definitions) {
-        for (BeanDefinition<?> definition : definitions) {
+    void validate(Set<BeanDefinition> definitions) {
+        for (BeanDefinition definition : definitions) {
             if (beanDefinitionByName.containsKey(definition.name())) {
                 throw DuplicateBeanException.forBeanName(definition.name());
             }
@@ -31,16 +30,16 @@ public class BeanDependencyGraph {
             addBeanToGraph(definition);
         }
 
-        for (BeanDefinition<?> definition : definitions) {
-            for (Parameter dependency : definition.dependencies()) {
-                if (!beanDefinitionByClass.containsKey(dependency.getType())) {
-                    throw NoSuchBeanException.forDependency(definition.type(), dependency.getType());
+        for (BeanDefinition definition : definitions) {
+            for (BeanDefinition dependency : definition.dependencies()) {
+                if (!beanDefinitionByClass.containsKey(dependency.type())) {
+                    throw NoSuchBeanException.forDependency(definition.type(), dependency.type());
                 }
             }
         }
     }
 
-    private void addBeanToGraph(BeanDefinition<?> definition) {
+    private void addBeanToGraph(BeanDefinition definition) {
         beanDefinitionByName.put(definition.name(), definition);
 
         //TODO: like app context is should be good to also add the interface or super class
@@ -56,11 +55,19 @@ public class BeanDependencyGraph {
     }
 
 
-    public BeanDefinition<?> getDefinitionByName(String name) {
-        return beanDefinitionByName.get(name);
+    BeanDefinition getDefinitionByNameAndOrType(String name, Class<?> type) {
+        if (beanDefinitionByName.containsKey(name)) {
+            var definition = beanDefinitionByName.get(name);
+
+            if (definition.type() == type) {
+                return definition;
+            }
+        }
+
+        return getDefinitionByType(type);
     }
 
-    public <T> BeanDefinition<T> getDefinitionByType(Class<T> clazz) {
+    BeanDefinition getDefinitionByType(Class<?> clazz) {
         var definitions = beanDefinitionByClass.get(clazz);
 
         if (definitions == null || definitions.isEmpty()) {
@@ -71,6 +78,6 @@ public class BeanDependencyGraph {
             throw DuplicateBeanException.forClass(clazz);
         }
 
-        return (BeanDefinition<T>) definitions.getFirst();
+        return definitions.getFirst();
     }
 }
