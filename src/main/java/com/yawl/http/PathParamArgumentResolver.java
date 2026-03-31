@@ -8,6 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.lang.reflect.Parameter;
 
+/**
+ * Resolves handler method parameters annotated with {@link com.yawl.annotations.PathParam} from the request URI.
+ */
 public class PathParamArgumentResolver implements HttpMethodArgumentResolver {
     @Override
     public boolean supports(Parameter parameter) {

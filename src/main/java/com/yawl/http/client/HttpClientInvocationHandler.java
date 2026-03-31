@@ -25,7 +25,7 @@ import java.util.function.Function;
 /**
  * This class serves as a proxy for {@code com.yawl.annotations.HttpClient} annotated interfaces.
  *
- * @param executor
+ * @param executor the HTTP executor used to perform requests
  */
 public record HttpClientInvocationHandler(HttpExecutor executor) implements InvocationHandler {
 

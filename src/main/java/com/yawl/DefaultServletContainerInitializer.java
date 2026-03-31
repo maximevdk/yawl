@@ -15,6 +15,9 @@ import org.slf4j.LoggerFactory;
 import java.util.EnumSet;
 import java.util.Set;
 
+/**
+ * Servlet container initializer that registers the {@link DispatcherServlet}, management servlet, and user-defined filters.
+ */
 public class DefaultServletContainerInitializer implements ServletContainerInitializer {
     private static final Logger log = LoggerFactory.getLogger(DefaultServletContainerInitializer.class);
 

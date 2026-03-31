@@ -1,13 +1,16 @@
 package com.yawl.http;
 
 import com.yawl.annotations.RequestHeader;
+import com.yawl.common.util.StringUtils;
 import com.yawl.exception.MissingRequiredHeaderException;
 import com.yawl.http.model.Route;
-import com.yawl.common.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.lang.reflect.Parameter;
 
+/**
+ * Resolves handler method parameters annotated with {@link com.yawl.annotations.RequestHeader} from HTTP headers.
+ */
 public class RequestHeaderArgumentResolver implements HttpMethodArgumentResolver {
     @Override
     public boolean supports(Parameter parameter) {

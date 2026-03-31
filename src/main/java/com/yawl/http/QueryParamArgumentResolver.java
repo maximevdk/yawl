@@ -8,9 +8,11 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Resolves handler method parameters annotated with {@link com.yawl.annotations.QueryParam} from query string parameters.
+ */
 public class QueryParamArgumentResolver implements HttpMethodArgumentResolver {
     @Override
     public boolean supports(Parameter parameter) {

@@ -26,11 +26,19 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * {@link HttpExecutor} implementation backed by the Apache HttpClient 5 library.
+ */
 public class ApacheHttpExecutor implements HttpExecutor {
     private static final Logger log = LoggerFactory.getLogger(ApacheHttpExecutor.class);
 
     private final JsonMapper jsonMapper;
 
+    /**
+     * Creates a new executor with the given JSON mapper for serialization and deserialization.
+     *
+     * @param jsonMapper the JSON mapper used to serialize request bodies and deserialize responses
+     */
     public ApacheHttpExecutor(JsonMapper jsonMapper) {
         this.jsonMapper = jsonMapper;
     }

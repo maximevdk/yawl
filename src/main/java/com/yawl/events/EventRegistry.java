@@ -11,7 +11,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+/**
+ * Default implementation of {@link EventPublisher} and {@link EventListenerRegistrar} that stores listeners
+ * in a thread-safe map and dispatches events synchronously.
+ */
 public final class EventRegistry implements EventPublisher, EventListenerRegistrar {
+    /** Creates a new instance. */
+    public EventRegistry() {}
+
     private static final Logger log = LoggerFactory.getLogger(EventRegistry.class);
 
     private final Map<Class<? extends Event>, List<Consumer<? extends Event>>> listeners = new ConcurrentHashMap<>();

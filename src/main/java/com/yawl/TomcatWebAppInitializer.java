@@ -5,6 +5,9 @@ import jakarta.servlet.ServletContextListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Servlet context listener that handles web application initialization events.
+ */
 public class TomcatWebAppInitializer implements ServletContextListener {
     private static final Logger log = LoggerFactory.getLogger(TomcatWebAppInitializer.class);
 

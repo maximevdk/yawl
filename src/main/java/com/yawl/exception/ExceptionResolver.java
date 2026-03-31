@@ -7,7 +7,9 @@ import com.yawl.http.model.HttpResponse;
  */
 public interface ExceptionResolver {
     /**
-     * Resolve an exception and map it into a corresponding @{com.yawl.http.model.HttpResponse}
+     * Resolve an exception and map it into a corresponding {@link HttpResponse}.
+     *
+     * @param exception the exception to resolve
      * @return a HttpResponse if this resolver handles the exception,
      * or null if it does not apply.
      */

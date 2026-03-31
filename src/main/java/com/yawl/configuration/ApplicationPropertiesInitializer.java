@@ -1,7 +1,5 @@
-package com.yawl;
+package com.yawl.configuration;
 
-import com.yawl.configuration.ApplicationProperties;
-import com.yawl.exception.InvalidContextException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
@@ -12,7 +10,10 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
 
-public class ApplicationPropertiesInitializer {
+/**
+ * Reads and merges YAML configuration files to produce the final {@link ApplicationProperties.Application}.
+ */
+class ApplicationPropertiesInitializer {
     private static final Set<String> CONFIG_FILE_NAMES = Set.of("application.yml", "application.yaml");
     private final YAMLMapper mapper;
 
@@ -20,14 +21,20 @@ public class ApplicationPropertiesInitializer {
         this.mapper = mapper;
     }
 
-    public ApplicationProperties.Application init(String defaultConfigLocation) {
+    /**
+     * Loads the default configuration and merges it with the user-defined application configuration.
+     *
+     * @param defaultConfigLocation the classpath location of the default configuration file
+     * @return the merged application properties
+     */
+    ApplicationProperties.Application init(String defaultConfigLocation) {
         try {
             var defaultProperties = (ObjectNode) mapper.readTree(streamResource(defaultConfigLocation));
             var overwrites = (ObjectNode) mapper.readTree(streamResource(userConfigFileLocation()));
             merge(overwrites, defaultProperties);
             return mapper.treeToValue(defaultProperties, ApplicationProperties.class).application();
         } catch (IOException ex) {
-            throw new InvalidContextException("Unable to read config file.", ex);
+            throw new RuntimeException("Unable to read config file.", ex);
         }
     }
 

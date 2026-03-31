@@ -10,12 +10,24 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Utility methods for reflective instantiation and method invocation.
+ */
 public final class ReflectionUtil {
     private static final Logger log = LoggerFactory.getLogger(ReflectionUtil.class);
 
     private ReflectionUtil() {
     }
 
+    /**
+     * Invokes the given method on the instance with the provided arguments.
+     *
+     * @param method    the method to invoke
+     * @param instance  the target object
+     * @param arguments the method arguments
+     * @param <T>       the return type
+     * @return the result wrapped in an {@link Optional}, or empty on failure
+     */
     public static <T> Optional<T> invoke(Method method, Object instance, List<?> arguments) {
         try {
             return Optional.ofNullable((T) method.invoke(instance, arguments.toArray()));
@@ -26,6 +38,14 @@ public final class ReflectionUtil {
         }
     }
 
+    /**
+     * Creates a new instance of the given class using the first accessible constructor matching the argument count.
+     *
+     * @param clazz the class to instantiate
+     * @param args  the constructor arguments
+     * @param <T>   the instance type
+     * @return the new instance wrapped in an {@link Optional}, or empty on failure
+     */
     public static <T> Optional<T> newInstance(Class<T> clazz, Object... args) {
         log.trace("Finding suitable constructor for class {}", (Object) clazz.getConstructors());
         var argumentTypes = Arrays.stream(args).map(Object::getClass).toArray(Class[]::new);

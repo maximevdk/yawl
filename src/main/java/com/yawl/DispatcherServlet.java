@@ -25,6 +25,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Arrays;
 
+/**
+ * Central HTTP servlet that dispatches incoming requests to the matching route handler
+ * and writes the response back to the client.
+ */
 public class DispatcherServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(DispatcherServlet.class);
     private final RouteRegistry routeRegistry = new RouteRegistry();
