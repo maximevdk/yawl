@@ -1,12 +1,14 @@
 package com.yawl.http;
 
 import com.yawl.annotations.QueryParam;
+import com.yawl.common.util.StringUtils;
 import com.yawl.exception.MissingRequiredParameterException;
 import com.yawl.http.model.Route;
-import com.yawl.common.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.lang.reflect.Parameter;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class QueryParamArgumentResolver implements HttpMethodArgumentResolver {
     @Override
@@ -19,7 +21,11 @@ public class QueryParamArgumentResolver implements HttpMethodArgumentResolver {
         var queryParam = parameter.getAnnotation(QueryParam.class);
         var parameterName = queryParam.name() != null ? queryParam.name() : parameter.getName();
 
-        var value = StringUtils.parse(request.getParameterValues(parameterName), parameter.getParameterizedType());
+        var values = Arrays.stream(request.getParameterValues(parameterName))
+                .filter(Objects::nonNull)
+                .filter(StringUtils::hasText)
+                .toArray(String[]::new);
+        var value = StringUtils.parse(values, parameter.getParameterizedType());
         if (value == null && queryParam.required()) {
             throw MissingRequiredParameterException.of(parameterName);
         }

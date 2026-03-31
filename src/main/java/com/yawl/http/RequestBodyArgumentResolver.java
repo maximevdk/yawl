@@ -7,12 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
 import java.lang.reflect.Parameter;
 
 public class RequestBodyArgumentResolver implements HttpMethodArgumentResolver {
     private static final Logger log = LoggerFactory.getLogger(RequestBodyArgumentResolver.class);
 
+    //TODO: body can be more than just JSON, like XML or anything else, we should allow for a reader instead of limiting us to jsonMapper
     private final JsonMapper jsonMapper;
 
     public RequestBodyArgumentResolver(JsonMapper jsonMapper) {
@@ -28,7 +28,7 @@ public class RequestBodyArgumentResolver implements HttpMethodArgumentResolver {
     public Object resolve(HttpServletRequest request, Route route, Parameter parameter) {
         try {
             return jsonMapper.readValue(request.getReader(), parameter.getType());
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             log.error("Unable to parse body", ex);
             throw new RuntimeException("Unable to parse body", ex);
         }

@@ -44,7 +44,9 @@ class StringUtilsTest {
                 .containsExactlyInAnyOrder(1, 2, 3);
 
         assertThat((String) StringUtils.parse(new String[]{"hello"}, String.class)).isEqualTo("hello");
+        assertThat((String) StringUtils.parse((String[]) null, String.class)).isNull();
         assertThat((String) StringUtils.parse((String) null, String.class)).isNull();
+        assertThat((String) StringUtils.parse(new String[]{}, String.class)).isNull();
 
         var uuid = UUID.randomUUID();
         assertThat((UUID) StringUtils.parse(new String[]{uuid.toString()}, UUID.class)).isEqualTo(uuid);

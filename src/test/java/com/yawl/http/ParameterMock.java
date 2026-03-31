@@ -2,6 +2,7 @@ package com.yawl.http;
 
 import com.yawl.annotations.PathParam;
 import com.yawl.annotations.QueryParam;
+import com.yawl.annotations.RequestBody;
 import com.yawl.annotations.RequestHeader;
 
 import java.lang.reflect.Parameter;
@@ -20,6 +21,12 @@ class ParameterMock {
     public void parameterWithQueryParam(@QueryParam(name = "testParam", required = true) String param) {
     }
 
+    public void parameterWithOptionalQueryParam(@QueryParam(name = "testParam", required = false) String param) {
+    }
+
     public void parameterWithPathParam(@PathParam(name = "pathParam") String param) {
+    }
+
+    public void parameterWithBody(@RequestBody String body) {
     }
 }
