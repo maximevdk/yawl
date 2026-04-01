@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 public class YawlApplication {
     private static final Logger log = LoggerFactory.getLogger(YawlApplication.class);
@@ -33,7 +34,8 @@ public class YawlApplication {
         beanService.loadAndInitializeConfig(CommonConfiguration.class);
 
         //initialize user defined beans
-        beanService.loadAndInitializeBeans(baseClass);
+        var basePackage = Optional.ofNullable(baseClass).map(Class::getPackage).orElseThrow(() -> new RuntimeException("Can't run application from nameless package"));
+        beanService.loadAndInitializeBeans(basePackage);
         registry.publish(new ApplicationEvent.ApplicationContextInitialized(ctx));
 
         var properties = ctx.getBeanByTypeOrThrow(ApplicationProperties.Application.class);
