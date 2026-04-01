@@ -41,10 +41,10 @@ public class BeanService {
     /**
      * Scans the package of the given base class and initializes all discoverable beans.
      *
-     * @param baseClass the class whose package is used as the scan root
+     * @param basePackage the package to be used as the scan root
      */
-    public void loadAndInitializeBeans(Class<?> baseClass) {
-        var definitions = beanDiscoveryService.discoverAll(baseClass.getPackage());
+    public void loadAndInitializeBeans(Package basePackage) {
+        var definitions = beanDiscoveryService.discoverAll(basePackage);
         graph.validate(definitions);
         definitions.forEach(this::lookupOrInitiate);
     }
@@ -83,7 +83,7 @@ public class BeanService {
             if (definition.type().isAnnotationPresent(HttpClient.class)) {
                 var bean = (T) Proxy.newProxyInstance(
                         definition.type().getClassLoader(),
-                        new Class[]{definition.type()},
+                        new Class<?>[]{definition.type()},
                         new HttpClientInvocationHandler(lookupOrInitiate(graph.getDefinitionByType(HttpExecutor.class)))
                 );
                 ctx.register(definition.name(), bean, definition.type());
