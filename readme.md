@@ -9,35 +9,34 @@ However, while certain aspects may appear similar, all code has been written ind
 <dependency>
     <groupId>io.github.maximevdk</groupId>
     <artifactId>yawl</artifactId>
-    <version>0.0.5</version>
+    <version>0.0.6</version>
 </dependency>
 ```
 
 ### Building an executable jar
 ```xml
 <plugin>
-    <artifactId>maven-assembly-plugin</artifactId>
-    <version>3.7.1</version>
+    <groupId>io.github.maximevdk</groupId>
+    <artifactId>yawl-maven-plugin</artifactId>
+    <version>0.0.2</version>
     <executions>
         <execution>
-            <phase>package</phase>
             <goals>
-                <goal>single</goal>
+                <goal>compile</goal>
+                <goal>package</goal>
             </goals>
         </execution>
     </executions>
-    <configuration>
-        <archive>
-            <manifest>
-                <addClasspath>true</addClasspath>
-                <mainClass>org.example.Application</mainClass>
-            </manifest>
-        </archive>
-        <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-        </descriptorRefs>
-    </configuration>
 </plugin>
+```
+
+optionally you can provide a main class in case you have more than one on the classpath.
+
+```xml
+
+<configuration>
+    <mainClass>com.example.MainClass</mainClass>
+</configuration>
 ```
 
 ## Usage
