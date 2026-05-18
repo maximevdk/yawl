@@ -8,14 +8,17 @@ import com.yawl.annotations.Import;
 import com.yawl.beans.model.BeanDefinition;
 import com.yawl.common.util.BeanUtil;
 import com.yawl.common.util.StringUtils;
+import com.yawl.configuration.Environment;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.MethodInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,6 +30,13 @@ import static java.util.function.Predicate.not;
  * {@link Discoverable}-annotated components, and {@link HttpClient}-annotated interfaces.
  */
 public class BeanDiscoveryService {
+    private static final Logger log = LoggerFactory.getLogger(BeanDiscoveryService.class);
+
+    private final Environment environment;
+
+    public BeanDiscoveryService(Environment environment) {
+        this.environment = environment;
+    }
 
     /**
      * Discovers bean definitions declared in the given configuration class and its imports.
@@ -39,23 +49,33 @@ public class BeanDiscoveryService {
             throw new IllegalArgumentException("No config class provided");
         }
 
-        var classes = new ArrayList<Class<?>>();
-        classes.add(configClass);
-
-        if (configClass.isAnnotationPresent(Import.class)) {
-            classes.addAll(Arrays.asList(configClass.getAnnotation(Import.class).value()));
+        var condition = configClass.getAnnotation(Configuration.class).condition();
+        if (StringUtils.hasText(condition.property()) && !environment.getProperty(condition.property(), "").equals(condition.hasValue())) {
+            log.debug("Ignored config class {} because property does not match", configClass);
+            return Set.of();
         }
 
-        var methods = classes.stream()
-                .map(Class::getDeclaredMethods)
-                .flatMap(Arrays::stream)
+        log.debug("Reading config class {}", configClass);
+
+        var definitions = new HashSet<BeanDefinition>(1);
+        definitions.add(new BeanDefinition(BeanUtil.getBeanName(configClass), configClass));
+
+        if (configClass.isAnnotationPresent(Import.class)) {
+            for (Class<?> importedClass : configClass.getAnnotation(Import.class).value()) {
+                if (importedClass.isAnnotationPresent(Configuration.class)) {
+                    definitions.addAll(discoverFromConfigClass(importedClass));
+                } else {
+                    definitions.addAll(discoverSet(Set.of(importedClass)));
+                }
+            }
+        }
+
+        Stream.of(configClass.getDeclaredMethods())
                 .filter(method -> method.isAnnotationPresent(Bean.class))
-                .map(this::map);
+                .map(this::map)
+                .forEach(definitions::add);
 
-        var configurations = classes.stream()
-                .map(clazz -> new BeanDefinition(BeanUtil.getBeanName(clazz), clazz));
-
-        return Stream.concat(methods, configurations).collect(Collectors.toSet());
+        return definitions;
     }
 
     /**
@@ -69,6 +89,7 @@ public class BeanDiscoveryService {
             return result.getClassesWithAnnotation(Discoverable.class)
                     .stream()
                     .filter(not(ClassInfo::isAnnotation))
+                    .filter(this::hasEnabledCondition)
                     .flatMap(this::map)
                     .collect(Collectors.toSet());
         }
@@ -86,6 +107,7 @@ public class BeanDiscoveryService {
             return result.getClassesWithAnnotation(Discoverable.class)
                     .stream()
                     .filter(not(ClassInfo::isAnnotation))
+                    .filter(this::hasEnabledCondition)
                     .flatMap(this::map)
                     .collect(Collectors.toSet());
         }
@@ -134,5 +156,26 @@ public class BeanDiscoveryService {
     private BeanDefinition map(Parameter parameter) {
         var name = BeanUtil.getParameterName(parameter);
         return new BeanDefinition(name, parameter.getType());
+    }
+
+    private boolean hasEnabledCondition(ClassInfo info) {
+        if (!info.hasAnnotation(Configuration.class)) {
+            return true;
+        }
+
+        var configuration = (Configuration) info.getAnnotationInfo(Configuration.class).loadClassAndInstantiate();
+
+        var condition = configuration.condition();
+        if (StringUtils.hasNoText(condition.property())) {
+            return true;
+        }
+
+        var propertyOrNull = environment.getProperty(condition.property(), null);
+
+        if (propertyOrNull == null) {
+            return false;
+        }
+
+        return propertyOrNull.equals(condition.hasValue());
     }
 }

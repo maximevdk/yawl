@@ -7,6 +7,6 @@ import com.yawl.annotations.Import;
  * Aggregate configuration that imports the core framework configuration classes.
  */
 @Configuration
-@Import({JacksonConfiguration.class, ApplicationPropertiesConfiguration.class, HttpConfiguration.class})
+@Import({JacksonConfiguration.class, ApplicationPropertiesConfiguration.class, HttpConfiguration.class, WebConfiguration.class})
 public class CommonConfiguration {
 }

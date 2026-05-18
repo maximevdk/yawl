@@ -1,7 +1,9 @@
 package com.yawl.beans;
 
+import com.yawl.annotations.Configuration;
 import com.yawl.annotations.HttpClient;
 import com.yawl.beans.model.BeanDefinition;
+import com.yawl.beans.model.CommonBeans;
 import com.yawl.common.util.ReflectionUtil;
 import com.yawl.events.EventListenerRegistrar;
 import com.yawl.exception.UnableToInitializeBeanException;
@@ -24,7 +26,7 @@ public class BeanService {
         this.ctx = ctx;
         this.eventRegistry = ctx.getBeanByTypeOrThrow(EventListenerRegistrar.class);
         this.graph = new BeanDependencyGraph(ctx);
-        this.beanDiscoveryService = new BeanDiscoveryService();
+        this.beanDiscoveryService = new BeanDiscoveryService(ctx.getBeanByNameOrThrow(CommonBeans.ENVIRONMENT_NAME));
     }
 
     /**
@@ -33,6 +35,10 @@ public class BeanService {
      * @param configClass the configuration class to process
      */
     public void loadAndInitializeConfig(Class<?> configClass) {
+        if (!configClass.isAnnotationPresent(Configuration.class)) {
+            throw new IllegalArgumentException("No config class provided");
+        }
+
         var definitions = beanDiscoveryService.discoverFromConfigClass(configClass);
         graph.validate(definitions);
         definitions.forEach(this::lookupOrInitiate);

@@ -41,6 +41,14 @@ public final class StringUtils {
         return !value.trim().isEmpty();
     }
 
+    public static boolean hasNoText(String value) {
+        if (value == null) {
+            return true;
+        }
+
+        return value.trim().isEmpty();
+    }
+
     /**
      * Converts the first character of the given string to lowercase.
      *
