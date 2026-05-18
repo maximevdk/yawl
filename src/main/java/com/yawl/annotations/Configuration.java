@@ -12,4 +12,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Discoverable
 public @interface Configuration {
+    Condition condition() default @Condition;
+
+    @interface Condition {
+        String property() default "";
+
+        String hasValue() default "";
+    }
 }

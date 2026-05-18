@@ -18,6 +18,8 @@ public final class CommonBeans {
     public static final String ENVIRONMENT_NAME = "environment";
     /** Bean name for the embedded web server. */
     public static final String WEB_SERVER_NAME = "webserver";
+    /** Bean name for the management servlet. */
+    public static final String MANAGEMENT_SERVLET_NAME = "managementServlet";
     /** Bean name for the request parameter argument resolver. */
     public static final String REQUEST_PARAMETER_ARGUMENT_RESOLVER = "requestParameterArgumentResolver";
 }

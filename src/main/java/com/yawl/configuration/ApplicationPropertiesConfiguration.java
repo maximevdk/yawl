@@ -24,7 +24,6 @@ public class ApplicationPropertiesConfiguration {
      */
     @Bean
     public ApplicationPropertiesInitializer initializer(@Qualifier(CommonBeans.YAML_MAPPER_NAME) YAMLMapper yamlMapper) {
-        //todo: add qualifier so we make sure the yamlMapper injected is the one the framework initialized
         return new ApplicationPropertiesInitializer(yamlMapper);
     }
 

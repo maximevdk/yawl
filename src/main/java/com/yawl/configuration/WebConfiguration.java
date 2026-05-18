@@ -1,7 +1,10 @@
 package com.yawl.configuration;
 
+import com.yawl.TomcatWebServer;
+import com.yawl.WebServer;
 import com.yawl.annotations.Bean;
 import com.yawl.annotations.Configuration;
+import com.yawl.annotations.Import;
 import com.yawl.beans.model.CommonBeans;
 import com.yawl.common.JsonHttpResponseWriter;
 import com.yawl.common.TextPlainResponseWriter;
@@ -16,8 +19,14 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
-@Configuration
+@Import(ManagementServletConfiguration.class)
+@Configuration(condition = @Configuration.Condition(property = "application.web.enabled", hasValue = "true"))
 public class WebConfiguration {
+
+    @Bean(name = CommonBeans.WEB_SERVER_NAME)
+    public WebServer webServer() {
+        return new TomcatWebServer();
+    }
 
     @Bean
     public RouteNotFoundExceptionResolver routeNotFoundExceptionResolver() {

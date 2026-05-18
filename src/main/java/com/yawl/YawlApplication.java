@@ -3,17 +3,15 @@ package com.yawl;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.BeanService;
 import com.yawl.beans.model.CommonBeans;
-import com.yawl.configuration.ApplicationProperties;
 import com.yawl.configuration.CommonConfiguration;
+import com.yawl.configuration.ConfigurableEnvironment;
 import com.yawl.configuration.Environment;
-import com.yawl.configuration.WebConfiguration;
 import com.yawl.configuration.model.CommandLinePropertySource;
 import com.yawl.events.ApplicationEvent;
 import com.yawl.events.EventRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Optional;
 
 public class YawlApplication {
@@ -22,8 +20,11 @@ public class YawlApplication {
     public static ApplicationContext run(Class<?> baseClass, String... args) {
         // create application context
         var ctx = new ApplicationContext();
-        var environment = new Environment(List.of(CommandLinePropertySource.from(args)));
-        ctx.register(CommonBeans.ENVIRONMENT_NAME, environment, Environment.class);
+        var configurableEnvironment = ConfigurableEnvironment.builder()
+                .addPropertySource(CommandLinePropertySource.from(args));
+        new ConfigDataLocationResolver().applyTo(configurableEnvironment);
+
+        ctx.register(CommonBeans.ENVIRONMENT_NAME, configurableEnvironment.build(), Environment.class);
 
         //initialize event handler
         var registry = new EventRegistry();
@@ -38,22 +39,9 @@ public class YawlApplication {
         beanService.loadAndInitializeBeans(basePackage);
         registry.publish(new ApplicationEvent.ApplicationContextInitialized(ctx));
 
-        var properties = ctx.getBeanByTypeOrThrow(ApplicationProperties.Application.class);
-        if (properties.web().enabled()) {
-            beanService.loadAndInitializeConfig(WebConfiguration.class);
-            registry.publish(new ApplicationEvent.ApplicationContextRefreshed(ctx));
-
-            if (properties.management().managementEndpointEnabled()) {
-                var servlet = new ManagementServlet();
-                ctx.register("managementServlet", servlet, ManagementServlet.class);
-                registry.registerListeners(servlet);
-            }
-
-            var webserver = new TomcatWebServer();
+        if (ctx.containsBeanName(CommonBeans.WEB_SERVER_NAME)) {
+            var webserver = ctx.getBeanByNameOrThrow(CommonBeans.WEB_SERVER_NAME, WebServer.class);
             webserver.start(ctx);
-
-            ctx.register(CommonBeans.WEB_SERVER_NAME, webserver);
-            registry.publish(new ApplicationEvent.ApplicationContextRefreshed(ctx));
         }
 
         return ctx;

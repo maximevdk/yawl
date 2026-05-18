@@ -2,6 +2,7 @@ package com.yawl.beans.isolated;
 
 import com.yawl.annotations.Bean;
 import com.yawl.annotations.Configuration;
+import com.yawl.annotations.Configuration.Condition;
 import com.yawl.annotations.HttpClient;
 import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
@@ -9,15 +10,18 @@ import com.yawl.annotations.WebController;
 import com.yawl.annotations.WebFilter;
 import com.yawl.beans.BeanDiscoveryService;
 import com.yawl.beans.model.BeanDefinition;
+import com.yawl.configuration.Environment;
+import com.yawl.configuration.model.PropertySource;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BeanDiscoveryServiceTest {
-    private final BeanDiscoveryService service = new BeanDiscoveryService();
+    private final BeanDiscoveryService service = new BeanDiscoveryService(new Environment(List.of(new MockPropertySource())));
 
     @Test
     void discoverAll() {
@@ -78,6 +82,13 @@ class BeanDiscoveryServiceTest {
                 .containsExactlyInAnyOrder(Test6.class.getName(), Test7.class.getName());
     }
 
+    @Test
+    void discoverFromConfigClass_configClass_conditionNotMet_returnsEmpty() {
+        var result = service.discoverFromConfigClass(Test8.class);
+        assertThat(result)
+                .isEmpty();
+    }
+
     @Repository(name = "repo")
     class Test1 {
     }
@@ -110,7 +121,7 @@ class BeanDiscoveryServiceTest {
     interface Test5 {
     }
 
-    @Configuration
+    @Configuration(condition = @Condition(property = "application.bean.enabled", hasValue = "true"))
     class Test6 {
         @Bean
         public Test7 bean(Long dep) {
@@ -122,6 +133,25 @@ class BeanDiscoveryServiceTest {
         }
     }
 
+    @Configuration(condition = @Condition(property = "application.web.enabled", hasValue = "true"))
+    class Test8 {
+        @Bean
+        public Test7 bean(Long dep) {
+            return new Test7();
+        }
+    }
+
     class Test7 {
+    }
+
+    static class MockPropertySource implements PropertySource {
+        @Override
+        public String getProperty(String key) {
+            if ("application.bean.enabled".equals(key)) {
+                return "true";
+            }
+
+            return null;
+        }
     }
 }

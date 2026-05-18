@@ -31,6 +31,15 @@ class StringUtilsTest {
     }
 
     @Test
+    void hasNoText() {
+        assertThat(StringUtils.hasNoText(" a )")).isFalse();
+        assertThat(StringUtils.hasNoText(") ")).isFalse();
+        assertThat(StringUtils.hasNoText(" )")).isFalse();
+        assertThat(StringUtils.hasNoText("")).isTrue();
+        assertThat(StringUtils.hasNoText("        ")).isTrue();
+    }
+
+    @Test
     void parse() throws NoSuchFieldException {
         var listType = getClass().getDeclaredField("stringList").getGenericType();
         var setType = getClass().getDeclaredField("intSet").getGenericType();

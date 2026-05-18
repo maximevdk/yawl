@@ -5,10 +5,11 @@ import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.BeanService;
 import com.yawl.beans.model.CommonBeans;
 import com.yawl.configuration.CommonConfiguration;
+import com.yawl.configuration.ConfigurableEnvironment;
 import com.yawl.configuration.Environment;
-import com.yawl.configuration.WebConfiguration;
 import com.yawl.configuration.model.CommonProperties;
 import com.yawl.configuration.model.PropertySource;
+import com.yawl.configuration.model.YamlConfigurationFilePropertySource;
 import com.yawl.events.Event;
 import com.yawl.events.EventListenerRegistrar;
 import com.yawl.events.EventPublisher;
@@ -20,7 +21,11 @@ import java.util.Set;
 public class TestContext {
     public ApplicationContext buildTestContext(Set<Class<?>> classes, String defaultConfigLocation) {
         var ctx = new ApplicationContext();
-        var environment = new Environment(List.of(new MapPropertySource(Map.of(CommonProperties.OVERWRITE_DEFAULTS_CONFIG_LOCATION, defaultConfigLocation))));
+        var environment = ConfigurableEnvironment.builder()
+                .addPropertySource(new MapPropertySource(Map.of(CommonProperties.OVERWRITE_DEFAULTS_CONFIG_LOCATION, defaultConfigLocation)))
+                .addPropertySource(YamlConfigurationFilePropertySource.init(getClass().getClassLoader().getResourceAsStream(defaultConfigLocation)))
+                .build();
+
         ctx.register(CommonBeans.ENVIRONMENT_NAME, environment, Environment.class);
 
         var eventPublisher = new NoOpEventListenerRegistrar();
@@ -28,7 +33,6 @@ public class TestContext {
 
         var beanService = new BeanService(ctx);
         beanService.loadAndInitializeConfig(CommonConfiguration.class);
-        beanService.loadAndInitializeConfig(WebConfiguration.class);
         beanService.loadAndInitializeBeans(classes);
 
         new TomcatWebServer().start(ctx);
