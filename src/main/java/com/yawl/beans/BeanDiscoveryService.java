@@ -51,11 +51,11 @@ public class BeanDiscoveryService {
 
         var condition = configClass.getAnnotation(Configuration.class).condition();
         if (StringUtils.hasText(condition.property()) && !environment.getProperty(condition.property(), "").equals(condition.hasValue())) {
-            log.debug("Ignored config class {} because property does not match", configClass);
+            log.trace("Ignored config class {} because property does not match", configClass);
             return Set.of();
         }
 
-        log.debug("Reading config class {}", configClass);
+        log.trace("Reading config class {}", configClass);
 
         var definitions = new HashSet<BeanDefinition>(1);
         definitions.add(new BeanDefinition(BeanUtil.getBeanName(configClass), configClass));
