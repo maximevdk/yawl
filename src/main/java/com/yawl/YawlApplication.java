@@ -33,15 +33,17 @@ public class YawlApplication {
         var beanService = new BeanService(ctx);
         //initialize and register basic beans
         beanService.loadAndInitializeConfig(CommonConfiguration.class);
+        registry.publish(new ApplicationEvent.ApplicationContextInitialized(ctx));
 
         //initialize user defined beans
         var basePackage = Optional.ofNullable(baseClass).map(Class::getPackage).orElseThrow(() -> new RuntimeException("Can't run application from nameless package"));
         beanService.loadAndInitializeBeans(basePackage);
-        registry.publish(new ApplicationEvent.ApplicationContextInitialized(ctx));
+        registry.publish(new ApplicationEvent.ApplicationContextRefreshed(ctx));
 
         if (ctx.containsBeanName(CommonBeans.WEB_SERVER_NAME)) {
             var webserver = ctx.getBeanByNameOrThrow(CommonBeans.WEB_SERVER_NAME, WebServer.class);
             webserver.start(ctx);
+            registry.publish(new ApplicationEvent.ApplicationContextRefreshed(ctx));
         }
 
         return ctx;

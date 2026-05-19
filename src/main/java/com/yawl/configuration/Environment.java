@@ -26,9 +26,9 @@ public record Environment(List<PropertySource> sources) {
         return getProperty(key).orElse(defaultValue);
     }
 
-    public <T> T getProperty(String key, T defaultValue) {
+    public <T> T getProperty(String key, T defaultValue, Class<T> clazz) {
         return (T) getProperty(key)
-                .map(value -> StringUtils.parse(value, defaultValue.getClass()))
+                .map(value -> StringUtils.parse(value, clazz))
                 .orElse(defaultValue);
     }
 
