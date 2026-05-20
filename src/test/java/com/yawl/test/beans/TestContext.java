@@ -1,5 +1,6 @@
 package com.yawl.test.beans;
 
+import com.yawl.MapPropertySource;
 import com.yawl.TomcatWebServer;
 import com.yawl.beans.ApplicationContext;
 import com.yawl.beans.BeanService;
@@ -8,13 +9,11 @@ import com.yawl.configuration.CommonConfiguration;
 import com.yawl.configuration.ConfigurableEnvironment;
 import com.yawl.configuration.Environment;
 import com.yawl.configuration.model.CommonProperties;
-import com.yawl.configuration.model.PropertySource;
 import com.yawl.configuration.model.YamlConfigurationFilePropertySource;
 import com.yawl.events.Event;
 import com.yawl.events.EventListenerRegistrar;
 import com.yawl.events.EventPublisher;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,19 +36,6 @@ public class TestContext {
 
         new TomcatWebServer().start(ctx);
         return ctx;
-    }
-
-    static class MapPropertySource implements PropertySource {
-        private final Map<String, String> properties;
-
-        public MapPropertySource(Map<String, String> properties) {
-            this.properties = properties;
-        }
-
-        @Override
-        public String getProperty(String key) {
-            return properties.get(key);
-        }
     }
 
     static class NoOpEventListenerRegistrar implements EventPublisher, EventListenerRegistrar {
