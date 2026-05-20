@@ -24,7 +24,9 @@ public final class StringUtils {
             Integer.class, Integer::parseInt,
             Long.class, Long::parseLong,
             UUID.class, UUID::fromString,
-            LocalDate.class, LocalDate::parse
+            LocalDate.class, LocalDate::parse,
+            boolean.class, Boolean::parseBoolean,
+            Boolean.class, Boolean::parseBoolean
     );
 
     /**
@@ -124,7 +126,7 @@ public final class StringUtils {
         var fn = STRING_PARSER_FN.get(clazz);
 
         if (fn == null) {
-            throw new IllegalArgumentException("No support to parse class as string " + clazz);
+            throw new IllegalArgumentException("No support to parse class as string: " + clazz);
         }
 
         return (T) fn.apply(value);
