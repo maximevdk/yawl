@@ -34,6 +34,7 @@ public class ManagementEndpointTest {
             assertThat(response.status().is2xxSuccessful()).isTrue();
             assertThat(((JsonNode) response.body()).get("status").stringValue()).isEqualTo("UP");
             assertThat(((JsonNode) response.body()).get("debug")).isNotNull();
+            assertThat(((JsonNode) response.body()).get("debug").get("beans")).isNotEmpty();
             assertThat(((JsonNode) response.body()).get("health")).isNotNull();
         }
     }
