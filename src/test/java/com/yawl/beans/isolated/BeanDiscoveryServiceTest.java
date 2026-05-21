@@ -121,7 +121,7 @@ class BeanDiscoveryServiceTest {
     interface Test5 {
     }
 
-    @Configuration(condition = @Condition(property = "application.bean.enabled", hasValue = "true"))
+    @Configuration(condition = @Condition(property = "application.bean.enabled", value = "true"))
     class Test6 {
         @Bean
         public Test7 bean(Long dep) {
@@ -133,7 +133,7 @@ class BeanDiscoveryServiceTest {
         }
     }
 
-    @Configuration(condition = @Condition(property = "application.web.enabled", hasValue = "true"))
+    @Configuration(condition = @Condition(property = "application.web.enabled", value = "true"))
     class Test8 {
         @Bean
         public Test7 bean(Long dep) {

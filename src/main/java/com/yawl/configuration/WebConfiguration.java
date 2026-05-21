@@ -20,7 +20,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.util.List;
 
 @Import(ManagementServletConfiguration.class)
-@Configuration(condition = @Configuration.Condition(property = "application.web.enabled", hasValue = "true"))
+@Configuration(condition = @Configuration.Condition(property = "application.web.enabled", value = "true"))
 public class WebConfiguration {
 
     @Bean(name = CommonBeans.WEB_SERVER_NAME)

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EnvironmentTest {
 
@@ -28,5 +30,16 @@ class EnvironmentTest {
         assertEquals(999, environment.getProperty("key3", null, Integer.class));
         assertEquals(111, environment.getProperty("unknown", 111, Integer.class));
         assertEquals(true, environment.getProperty("key4", null, boolean.class));
+    }
+
+    @Test
+    void containsPropertyWithValue() {
+        assertTrue(environment.containsPropertyWithValue("key1", "value1"));
+        assertFalse(environment.containsPropertyWithValue("key2", "value1"));
+
+        assertFalse(environment.containsPropertyWithValue("unknown", "value1"));
+        assertTrue(environment.containsPropertyWithValue("unknown", null));
+
+        assertTrue(environment.containsPropertyWithValue(null, null));
     }
 }
