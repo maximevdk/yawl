@@ -50,7 +50,7 @@ public class BeanDiscoveryService {
         }
 
         var condition = configClass.getAnnotation(Configuration.class).condition();
-        if (StringUtils.hasText(condition.property()) && !environment.getProperty(condition.property(), "").equals(condition.hasValue())) {
+        if (StringUtils.hasText(condition.property()) && !environment.containsPropertyWithValue(condition.property(), condition.value())) {
             log.trace("Ignored config class {} because property does not match", configClass);
             return Set.of();
         }
@@ -170,12 +170,6 @@ public class BeanDiscoveryService {
             return true;
         }
 
-        var propertyOrNull = environment.getProperty(condition.property(), null);
-
-        if (propertyOrNull == null) {
-            return false;
-        }
-
-        return propertyOrNull.equals(condition.hasValue());
+        return environment.containsPropertyWithValue(condition.property(), condition.value());
     }
 }

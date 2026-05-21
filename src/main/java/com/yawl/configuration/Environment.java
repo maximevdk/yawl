@@ -32,7 +32,21 @@ public record Environment(List<PropertySource> sources) {
                 .orElse(defaultValue);
     }
 
+    public boolean containsPropertyWithValue(String key, String value) {
+        var property = getProperty(key).orElse(null);
+
+        if (property == null) {
+            return value == null;
+        }
+
+        return property.equals(value);
+    }
+
     private Optional<String> getProperty(String key) {
+        if (key == null) {
+            return Optional.empty();
+        }
+
         return sources.stream()
                 .map(source -> source.getProperty(key))
                 .filter(Objects::nonNull)

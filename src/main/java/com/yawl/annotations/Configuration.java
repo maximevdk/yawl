@@ -17,6 +17,6 @@ public @interface Configuration {
     @interface Condition {
         String property() default "";
 
-        String hasValue() default "";
+        String value() default "";
     }
 }
