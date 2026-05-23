@@ -1,9 +1,11 @@
 package com.yawl.beans.isolated;
 
+import com.yawl.MapPropertySource;
 import com.yawl.annotations.Bean;
+import com.yawl.annotations.Conditional;
 import com.yawl.annotations.Configuration;
-import com.yawl.annotations.Configuration.Condition;
 import com.yawl.annotations.HttpClient;
+import com.yawl.annotations.Import;
 import com.yawl.annotations.Repository;
 import com.yawl.annotations.Service;
 import com.yawl.annotations.WebController;
@@ -11,25 +13,25 @@ import com.yawl.annotations.WebFilter;
 import com.yawl.beans.BeanDiscoveryService;
 import com.yawl.beans.model.BeanDefinition;
 import com.yawl.configuration.Environment;
-import com.yawl.configuration.model.PropertySource;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BeanDiscoveryServiceTest {
-    private final BeanDiscoveryService service = new BeanDiscoveryService(new Environment(List.of(new MockPropertySource())));
+    private final BeanDiscoveryService service = new BeanDiscoveryService(new Environment(List.of(new MapPropertySource(Map.of("application.bean.enabled", "true")))));
 
     @Test
     void discoverAll() {
         var result = service.discoverAll(getClass().getPackage());
-        assertThat(result).hasSize(7);
+        assertThat(result).hasSize(8);
         assertThat(result).extracting(BeanDefinition::type)
                 .map(Class::getName)
-                .containsExactlyInAnyOrder(Test1.class.getName(), Test2.class.getName(), Test3.class.getName(), Test4.class.getName(), Test5.class.getName(), Test6.class.getName(), Test7.class.getName());
+                .containsExactlyInAnyOrder(Test1.class.getName(), Test2.class.getName(), Test3.class.getName(), Test4.class.getName(), Test5.class.getName(), Test6.class.getName(), Test7.class.getName(), Test11.class.getName());
 
         var test3 = result.stream()
                 .filter(definition -> definition.type() == Test3.class)
@@ -48,10 +50,10 @@ class BeanDiscoveryServiceTest {
         var input = Set.of(Test1.class, Test2.class, Test3.class, Test4.class, Test5.class, Test6.class);
         var result = service.discoverSet(input);
 
-        assertThat(result).hasSize(7);
+        assertThat(result).hasSize(8);
         assertThat(result).extracting(BeanDefinition::type)
                 .map(Class::getName)
-                .containsExactlyInAnyOrder(Test1.class.getName(), Test2.class.getName(), Test3.class.getName(), Test4.class.getName(), Test5.class.getName(), Test6.class.getName(), Test7.class.getName());
+                .containsExactlyInAnyOrder(Test1.class.getName(), Test2.class.getName(), Test3.class.getName(), Test4.class.getName(), Test5.class.getName(), Test6.class.getName(), Test7.class.getName(), Test11.class.getName());
 
         var test3 = result.stream()
                 .filter(definition -> definition.type() == Test3.class)
@@ -76,10 +78,10 @@ class BeanDiscoveryServiceTest {
     void discoverFromConfigClass_configClass_discoversMethodsAndConfigClass() {
         var result = service.discoverFromConfigClass(Test6.class);
         assertThat(result)
-                .hasSize(2)
+                .hasSize(3)
                 .extracting(BeanDefinition::type)
                 .extracting(Class::getName)
-                .containsExactlyInAnyOrder(Test6.class.getName(), Test7.class.getName());
+                .containsExactlyInAnyOrder(Test6.class.getName(), Test7.class.getName(), Test11.class.getName());
     }
 
     @Test
@@ -121,7 +123,9 @@ class BeanDiscoveryServiceTest {
     interface Test5 {
     }
 
-    @Configuration(condition = @Condition(property = "application.bean.enabled", value = "true"))
+    @Configuration
+    @Import({Test10.class, Test11.class})
+    @Conditional(property = "application.bean.enabled", value = "true")
     class Test6 {
         @Bean
         public Test7 bean(Long dep) {
@@ -131,9 +135,16 @@ class BeanDiscoveryServiceTest {
         public Test7 ignored() {
             return new Test7();
         }
+
+        @Bean
+        @Conditional(property = "application.bean.enabled", value = "false")
+        public Test9 beanWithConditionalDisabled() {
+            return new Test9();
+        }
     }
 
-    @Configuration(condition = @Condition(property = "application.web.enabled", value = "true"))
+    @Configuration
+    @Conditional(property = "application.web.enabled", value = "true")
     class Test8 {
         @Bean
         public Test7 bean(Long dep) {
@@ -144,14 +155,25 @@ class BeanDiscoveryServiceTest {
     class Test7 {
     }
 
-    static class MockPropertySource implements PropertySource {
-        @Override
-        public String getProperty(String key) {
-            if ("application.bean.enabled".equals(key)) {
-                return "true";
-            }
+    class Test9 {
+    }
 
-            return null;
+    @Configuration
+    @Conditional(property = "application.bean.enabled", value = "false")
+    class Test10 {
+        @Bean
+        public Test12 bean(Long dep) {
+            return new Test12();
         }
+    }
+
+    @Configuration
+    @Import(Test12.class)
+    @Conditional(property = "application.bean.enabled", value = "true")
+    class Test11 {
+    }
+
+    class Test12 {
+
     }
 }

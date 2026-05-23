@@ -1,6 +1,7 @@
 package com.yawl.beans;
 
 import com.yawl.annotations.Bean;
+import com.yawl.annotations.Conditional;
 import com.yawl.annotations.Configuration;
 import com.yawl.annotations.Discoverable;
 import com.yawl.annotations.HttpClient;
@@ -15,6 +16,7 @@ import io.github.classgraph.MethodInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
@@ -49,8 +51,8 @@ public class BeanDiscoveryService {
             throw new IllegalArgumentException("No config class provided");
         }
 
-        var condition = configClass.getAnnotation(Configuration.class).condition();
-        if (StringUtils.hasText(condition.property()) && !environment.containsPropertyWithValue(condition.property(), condition.value())) {
+        var condition = configClass.getAnnotation(Conditional.class);
+        if (condition != null && !hasEnabledCondition(condition)) {
             log.trace("Ignored config class {} because property does not match", configClass);
             return Set.of();
         }
@@ -72,6 +74,7 @@ public class BeanDiscoveryService {
 
         Stream.of(configClass.getDeclaredMethods())
                 .filter(method -> method.isAnnotationPresent(Bean.class))
+                .filter(this::hasEnabledCondition)
                 .map(this::map)
                 .forEach(definitions::add);
 
@@ -117,12 +120,14 @@ public class BeanDiscoveryService {
         if (info.hasAnnotation(Configuration.class)) {
             var methods = info.getDeclaredMethodInfo().stream()
                     .filter(methodInfo -> methodInfo.hasAnnotation(Bean.class))
+                    .filter(this::hasEnabledCondition)
                     .map(MethodInfo::loadClassAndGetMethod)
                     .map(this::map);
             var configuration = info.getDeclaredConstructorInfo().stream()
                     .filter(MethodInfo::isConstructor)
                     .max(MethodInfo::compareTo)
                     .stream()
+                    .map(MethodInfo::loadClassAndGetConstructor)
                     .map(this::map);
             return Stream.concat(methods, configuration);
         }
@@ -136,6 +141,7 @@ public class BeanDiscoveryService {
                 .filter(MethodInfo::isConstructor)
                 .max(MethodInfo::compareTo)
                 .stream()
+                .map(MethodInfo::loadClassAndGetConstructor)
                 .map(this::map);
     }
 
@@ -146,8 +152,7 @@ public class BeanDiscoveryService {
         return new BeanDefinition(name, method.getReturnType(), dependencies, method);
     }
 
-    private BeanDefinition map(MethodInfo method) {
-        var constructor = method.loadClassAndGetConstructor();
+    private BeanDefinition map(Constructor<?> constructor) {
         var clazz = constructor.getDeclaringClass();
         var dependencies = Arrays.stream(constructor.getParameters()).map(this::map).toList();
         return new BeanDefinition(BeanUtil.getBeanName(clazz), clazz, dependencies, null);
@@ -158,18 +163,34 @@ public class BeanDiscoveryService {
         return new BeanDefinition(name, parameter.getType());
     }
 
+    private boolean hasEnabledCondition(MethodInfo info) {
+        if (!info.hasAnnotation(Conditional.class)) {
+            return true;
+        }
+
+        var conditional = (Conditional) info.getAnnotationInfo(Conditional.class).loadClassAndInstantiate();
+        return hasEnabledCondition(conditional);
+    }
+
+    private boolean hasEnabledCondition(Method method) {
+        if (!method.isAnnotationPresent(Conditional.class)) {
+            return true;
+        }
+
+        var conditional = method.getAnnotation(Conditional.class);
+        return hasEnabledCondition(conditional);
+    }
+
     private boolean hasEnabledCondition(ClassInfo info) {
-        if (!info.hasAnnotation(Configuration.class)) {
+        if (!info.hasAnnotation(Conditional.class)) {
             return true;
         }
 
-        var configuration = (Configuration) info.getAnnotationInfo(Configuration.class).loadClassAndInstantiate();
+        var conditional = (Conditional) info.getAnnotationInfo(Conditional.class).loadClassAndInstantiate();
+        return hasEnabledCondition(conditional);
+    }
 
-        var condition = configuration.condition();
-        if (StringUtils.hasNoText(condition.property())) {
-            return true;
-        }
-
-        return environment.containsPropertyWithValue(condition.property(), condition.value());
+    private boolean hasEnabledCondition(Conditional conditional) {
+        return environment.containsPropertyWithValue(conditional.property(), conditional.value());
     }
 }

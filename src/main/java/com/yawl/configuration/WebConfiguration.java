@@ -1,10 +1,11 @@
 package com.yawl.configuration;
 
+import com.yawl.ManagementServlet;
 import com.yawl.TomcatWebServer;
 import com.yawl.WebServer;
 import com.yawl.annotations.Bean;
+import com.yawl.annotations.Conditional;
 import com.yawl.annotations.Configuration;
-import com.yawl.annotations.Import;
 import com.yawl.beans.model.CommonBeans;
 import com.yawl.common.JsonHttpResponseWriter;
 import com.yawl.common.TextPlainResponseWriter;
@@ -19,9 +20,15 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
-@Import(ManagementServletConfiguration.class)
-@Configuration(condition = @Configuration.Condition(property = "application.web.enabled", value = "true"))
+@Configuration
+@Conditional(property = "application.web.enabled", value = "true")
 public class WebConfiguration {
+
+    @Bean(name = CommonBeans.MANAGEMENT_SERVLET_NAME)
+    @Conditional(property = "application.management.endpoint.enabled", value = "true")
+    public ManagementServlet managementServlet() {
+        return new ManagementServlet();
+    }
 
     @Bean(name = CommonBeans.WEB_SERVER_NAME)
     public WebServer webServer() {
