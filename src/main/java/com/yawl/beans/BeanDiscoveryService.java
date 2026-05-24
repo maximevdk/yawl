@@ -47,38 +47,7 @@ public class BeanDiscoveryService {
      * @return the set of discovered bean definitions
      */
     public Set<BeanDefinition> discoverFromConfigClass(Class<?> configClass) {
-        if (!configClass.isAnnotationPresent(Configuration.class)) {
-            throw new IllegalArgumentException("No config class provided");
-        }
-
-        var condition = configClass.getAnnotation(Conditional.class);
-        if (condition != null && !hasEnabledCondition(condition)) {
-            log.trace("Ignored config class {} because property does not match", configClass);
-            return Set.of();
-        }
-
-        log.trace("Reading config class {}", configClass);
-
-        var definitions = new HashSet<BeanDefinition>(1);
-        definitions.add(new BeanDefinition(BeanUtil.getBeanName(configClass), configClass));
-
-        if (configClass.isAnnotationPresent(Import.class)) {
-            for (Class<?> importedClass : configClass.getAnnotation(Import.class).value()) {
-                if (importedClass.isAnnotationPresent(Configuration.class)) {
-                    definitions.addAll(discoverFromConfigClass(importedClass));
-                } else {
-                    definitions.addAll(discoverSet(Set.of(importedClass)));
-                }
-            }
-        }
-
-        Stream.of(configClass.getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(Bean.class))
-                .filter(this::hasEnabledCondition)
-                .map(this::map)
-                .forEach(definitions::add);
-
-        return definitions;
+        return discoverFromConfigClass(configClass, new HashSet<>());
     }
 
     /**
@@ -114,6 +83,45 @@ public class BeanDiscoveryService {
                     .flatMap(this::map)
                     .collect(Collectors.toSet());
         }
+    }
+
+    private Set<BeanDefinition> discoverFromConfigClass(Class<?> configClass, Set<Class<?>> visited) {
+        if (!configClass.isAnnotationPresent(Configuration.class)) {
+            throw new IllegalArgumentException("No config class provided");
+        }
+
+        if (!visited.add(configClass)) {
+            return Set.of();
+        }
+
+        var condition = configClass.getAnnotation(Conditional.class);
+        if (condition != null && !hasEnabledCondition(condition)) {
+            log.trace("Ignored config class {} because property does not match", configClass);
+            return Set.of();
+        }
+
+        log.trace("Reading config class {}", configClass);
+
+        var definitions = new HashSet<BeanDefinition>(1);
+        definitions.add(new BeanDefinition(BeanUtil.getBeanName(configClass), configClass));
+
+        if (configClass.isAnnotationPresent(Import.class)) {
+            for (Class<?> importedClass : configClass.getAnnotation(Import.class).value()) {
+                if (importedClass.isAnnotationPresent(Configuration.class)) {
+                    definitions.addAll(discoverFromConfigClass(importedClass, visited));
+                } else {
+                    definitions.addAll(discoverSet(Set.of(importedClass)));
+                }
+            }
+        }
+
+        Stream.of(configClass.getDeclaredMethods())
+                .filter(method -> method.isAnnotationPresent(Bean.class))
+                .filter(this::hasEnabledCondition)
+                .map(this::map)
+                .forEach(definitions::add);
+
+        return definitions;
     }
 
     private Stream<BeanDefinition> map(ClassInfo info) {
