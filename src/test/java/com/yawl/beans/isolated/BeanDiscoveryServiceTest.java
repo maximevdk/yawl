@@ -168,7 +168,7 @@ class BeanDiscoveryServiceTest {
     }
 
     @Configuration
-    @Import(Test12.class)
+    @Import({Test12.class, Test6.class})
     @Conditional(property = "application.bean.enabled", value = "true")
     class Test11 {
     }
