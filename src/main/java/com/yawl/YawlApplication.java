@@ -9,14 +9,10 @@ import com.yawl.configuration.Environment;
 import com.yawl.configuration.model.CommandLinePropertySource;
 import com.yawl.events.ApplicationEvent;
 import com.yawl.events.EventRegistry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
 public class YawlApplication {
-    private static final Logger log = LoggerFactory.getLogger(YawlApplication.class);
-
     public static ApplicationContext run(Class<?> baseClass, String... args) {
         // create application context
         var ctx = new ApplicationContext();
