@@ -18,7 +18,7 @@ However, while certain aspects may appear similar, all code has been written ind
 <plugin>
     <groupId>io.github.maximevdk</groupId>
     <artifactId>yawl-maven-plugin</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <executions>
         <execution>
             <goals>
